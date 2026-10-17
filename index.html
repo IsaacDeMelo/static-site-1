@@ -1,0 +1,3225 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon"
+        href="https://images.vexels.com/media/users/3/318589/isolated/preview/331a8ba0fd9f33bfe5bd770521459e1b-dados-para-jogos-de-rpg.png"
+        type="image/x-icon">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #0f0c08;
+            --surface: #1b1610;
+            --surface-2: #241d14;
+            --field: #0d0a06;
+            --border: #3b3123;
+            --border-soft: #2a2216;
+            --ink: #e8ddc3;
+            --muted: #a3946f;
+            --gold: #c9a227;
+            --gold-b: #e6c14e;
+            --danger: #b04242;
+            --wood: #22190f;
+            --wood-dark: #110c07;
+            --font-title: Georgia, 'Times New Roman', serif;
+        }
+
+        body {
+            font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+            font-size: 13px;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            opacity: 0;
+            transition: opacity 1.2s linear;
+            overflow: hidden;
+            background: var(--bg);
+            color: var(--ink);
+        }
+
+        .ic {
+            width: 15px;
+            height: 15px;
+            flex-shrink: 0;
+        }
+
+        .title {
+            font-family: var(--font-title);
+            font-size: 14px;
+            color: var(--ink);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .title .ic {
+            width: 16px;
+            height: 16px;
+            color: var(--gold);
+        }
+
+        .sidebar {
+            width: 250px;
+            flex-shrink: 0;
+            height: 100vh;
+            padding: 58px 12px 12px 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--wood-dark);
+            background-image:
+                repeating-linear-gradient(90deg, rgba(255, 255, 255, .015) 0 2px, transparent 2px 24px),
+                radial-gradient(ellipse at top, rgba(201, 162, 39, .07), transparent 55%);
+            box-shadow: inset 0 0 90px 8px rgba(0, 0, 0, .9);
+            transition: width .28s ease, padding .28s ease;
+            order: 1;
+        }
+
+        .right-sidebar {
+            order: 3;
+        }
+
+        .center {
+            order: 2;
+        }
+
+        .sidebar.collapsed {
+            width: 0;
+            padding: 12px 0;
+        }
+
+        .sidebar.collapsed>* {
+            display: none;
+        }
+
+        .search {
+            width: 100%;
+            margin: 10px 0;
+            padding: 7px 10px;
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            background: var(--field);
+            color: var(--ink);
+            font-family: inherit;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        .search:focus-visible {
+            outline: none;
+            border-color: var(--gold);
+        }
+
+        .search::placeholder {
+            color: var(--muted);
+        }
+
+        .grid-list {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            border-radius: 8px;
+            padding: 8px;
+            width: 100%;
+            background: var(--surface);
+            background-image: radial-gradient(circle at 2px 2px, rgba(201, 162, 39, .10) 1px, transparent 1px);
+            background-size: 15px 15px;
+            border: 1px solid var(--border-soft);
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-auto-rows: 62px;
+            gap: 6px;
+            justify-items: center;
+            align-content: start;
+            box-shadow: inset 0 0 24px rgba(0, 0, 0, .6);
+        }
+
+        .grid-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .grid-list::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 6px;
+        }
+
+        .box {
+            width: 56px;
+            height: 56px;
+            border-radius: 8px;
+            border: 2px solid var(--border);
+            transition: .12s linear all;
+            cursor: pointer;
+            position: relative;
+            background-size: cover;
+            background-position: center;
+            background-color: var(--surface-2);
+            overflow: hidden;
+        }
+
+        .box:hover {
+            border-color: var(--gold);
+            transform: translateY(-1px);
+        }
+
+        .box.selected {
+            border-color: var(--gold-b);
+            box-shadow: 0 0 10px rgba(230, 193, 78, .55);
+        }
+
+        .box-label {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, .82);
+            color: var(--ink);
+            font-size: 9.5px;
+            padding: 2px 3px;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .box-count {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: var(--gold);
+            color: #1b1207;
+            font-size: 9px;
+            font-weight: bold;
+            border-radius: 7px;
+            padding: 0 4px;
+            line-height: 14px;
+        }
+
+        .box.addNew {
+            border: 2px dashed var(--gold);
+            background: rgba(201, 162, 39, .10);
+            color: var(--gold-b);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .box.addNew .ic {
+            width: 22px;
+            height: 22px;
+        }
+
+        .list-empty {
+            grid-column: 1 / -1;
+            color: var(--muted);
+            text-align: center;
+            padding: 12px 4px;
+            font-size: 12px;
+        }
+
+        .edgeBtn {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 68px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--wood-dark);
+            color: var(--gold);
+            cursor: pointer;
+            z-index: 60;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .7);
+        }
+
+        .edgeBtn .ic {
+            width: 16px;
+            height: 16px;
+            transition: transform .28s;
+        }
+
+        .edgeBtn:hover {
+            color: var(--gold-b);
+        }
+
+        #edgeLeft {
+            left: 0;
+            transition: left .28s ease;
+        }
+
+        #edgeRight {
+            right: 0;
+            transition: right .28s ease;
+        }
+
+        body.left-open #edgeLeft {
+            left: 246px;
+        }
+
+        body.right-open #edgeRight {
+            right: 246px;
+        }
+
+        body.left-open #edgeLeft .ic {
+            transform: rotate(180deg);
+        }
+
+        body.right-open #edgeRight .ic {
+            transform: rotate(180deg);
+        }
+
+        .topBar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 46px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 0 12px;
+            background: rgba(9, 7, 4, .93);
+            border-bottom: 1px solid var(--border-soft);
+            z-index: 70;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--font-title);
+            font-size: 14px;
+            color: var(--gold-b);
+            white-space: nowrap;
+        }
+
+        .brand .ic {
+            width: 18px;
+            height: 18px;
+            color: var(--gold);
+        }
+
+        .topActions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .saveStatus {
+            font-family: var(--font-title);
+            font-size: 11px;
+            letter-spacing: .3px;
+            white-space: nowrap;
+            color: var(--muted);
+            opacity: 0;
+            transition: opacity .4s;
+        }
+
+        .saveStatus.show {
+            opacity: 1;
+        }
+
+        .saveStatus.warn {
+            color: #e0a44e;
+        }
+
+        .sideHead {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            width: 100%;
+        }
+
+        .sideHead .ic {
+            width: 16px;
+            height: 16px;
+            color: var(--gold);
+            flex-shrink: 0;
+        }
+
+        .picker {
+            flex: 1;
+            min-width: 0;
+            padding: 6px 8px;
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            background: var(--surface-2);
+            color: var(--ink);
+            font-family: var(--font-title);
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .picker:focus-visible {
+            outline: none;
+            border-color: var(--gold);
+        }
+
+        .ioBtn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 6px 11px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--surface-2);
+            color: var(--gold-b);
+            font-family: inherit;
+            font-size: 12.5px;
+            cursor: pointer;
+        }
+
+        .ioBtn .ic {
+            width: 14px;
+            height: 14px;
+            color: var(--gold);
+        }
+
+        .ioBtn:hover {
+            background: var(--surface);
+            border-color: var(--gold);
+        }
+
+        .ioBtn.active {
+            background: var(--gold);
+            color: #1b1207;
+            font-weight: bold;
+        }
+
+        .ioBtn.active .ic {
+            color: #1b1207;
+        }
+
+        .center {
+            flex: 1;
+            min-width: 0;
+            height: 100vh;
+            overflow-y: auto;
+            background:
+                radial-gradient(circle at 3px 3px, rgba(201, 162, 39, .05) 1px, transparent 1.5px) 0 0 / 18px 18px,
+                radial-gradient(ellipse at 50% -10%, rgba(201, 162, 39, .10), transparent 55%),
+                var(--bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 58px 18px 32px;
+        }
+
+        .emptyState {
+            color: var(--muted);
+            font-size: 13px;
+            font-family: var(--font-title);
+            text-align: center;
+            margin-top: 30vh;
+            line-height: 1.7;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .emptyState .ic {
+            width: 54px;
+            height: 54px;
+            color: var(--border);
+        }
+
+        .editorCard {
+            width: 100%;
+            max-width: 760px;
+            background: var(--surface);
+            background-image: radial-gradient(circle at 2px 2px, rgba(201, 162, 39, .05) 1px, transparent 1px);
+            background-size: 15px 15px;
+            border: 1px solid var(--border);
+            outline: 1px solid var(--gold);
+            outline-offset: -5px;
+            border-radius: 10px;
+            padding: 16px 18px;
+            color: var(--ink);
+            box-shadow: 0 12px 34px rgba(0, 0, 0, .6);
+            margin-bottom: 24px;
+        }
+
+        #editorRoot.narrow {
+            width: min(760px, 100%);
+        }
+
+        .editorCard h2 {
+            margin: 0 0 4px 0;
+            color: var(--gold-b);
+            font-family: var(--font-title);
+            font-size: 19px;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 7px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .editorCard h3 {
+            margin: 16px 0 8px 0;
+            color: var(--gold);
+            font-family: var(--font-title);
+            font-size: 13.5px;
+            letter-spacing: .5px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            border-bottom: 1px dashed var(--border);
+            padding-bottom: 5px;
+        }
+
+        .editorCard h3 .ic {
+            width: 15px;
+            height: 15px;
+        }
+
+        .subtitle {
+            font-size: 11px;
+            color: var(--muted);
+            margin-bottom: 10px;
+        }
+
+        .cardActions {
+            display: flex;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .sheet {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .sheetTop {
+            display: flex;
+            gap: 14px;
+            align-items: stretch;
+        }
+
+        .sheetPortrait {
+            width: 120px;
+            height: 120px;
+            flex-shrink: 0;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background-color: var(--surface-2);
+            background-size: cover;
+            background-position: center;
+            box-shadow: inset 0 0 34px rgba(0, 0, 0, .65);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--border);
+        }
+
+        .sheetPortrait .ic {
+            width: 44px;
+            height: 44px;
+        }
+
+        .idBlock {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
+            justify-content: center;
+        }
+
+        .sheetName {
+            font-family: var(--font-title);
+            font-size: 22px;
+            color: var(--gold-b);
+            line-height: 1.15;
+        }
+
+        .badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .badge {
+            font-size: 11px;
+            padding: 3px 10px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: var(--surface-2);
+            color: var(--ink);
+        }
+
+        .badge.gold {
+            border-color: var(--gold);
+            color: var(--gold-b);
+            background: rgba(201, 162, 39, .13);
+        }
+
+        .hpHead {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            font-size: 10.5px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            margin-bottom: 4px;
+        }
+
+        .hpHead strong {
+            color: var(--gold-b);
+            font-size: 13px;
+        }
+
+        .hpBar {
+            height: 10px;
+            border-radius: 999px;
+            background: rgba(0, 0, 0, .45);
+            border: 1px solid var(--border-soft);
+            overflow: hidden;
+        }
+
+        .hpFill {
+            height: 100%;
+            background: linear-gradient(90deg, #7c1f1f, #c0392b);
+            transition: width .3s ease;
+        }
+
+        .hpFill.low {
+            background: linear-gradient(90deg, #7a2e0f, #e07b1a);
+        }
+
+        .sheetAttrs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 9px;
+        }
+
+        .attrView {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: rgba(0, 0, 0, .25);
+            padding: 9px 10px;
+        }
+
+        .attrView.required {
+            border-color: var(--gold);
+        }
+
+        .attrViewHead {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            margin-bottom: 7px;
+        }
+
+        .attrViewHead .k {
+            font-family: var(--font-title);
+            font-size: 15px;
+            color: var(--gold-b);
+        }
+
+        .attrViewHead .t {
+            font-family: var(--font-title);
+            font-size: 20px;
+            color: var(--ink);
+        }
+
+        .attrViewSplits {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .chip {
+            display: inline-flex;
+            gap: 5px;
+            align-items: center;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 7px;
+            background: var(--surface-2);
+            border: 1px solid var(--border-soft);
+            color: var(--muted);
+        }
+
+        .chip b {
+            color: var(--gold-b);
+        }
+
+        .sheetRows {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .sheetRow {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            padding: 6px 9px;
+            border: 1px solid var(--border-soft);
+            border-radius: 9px;
+            background: rgba(0, 0, 0, .22);
+        }
+
+        .sheetRowText {
+            min-width: 0;
+        }
+
+        .sheetRowText .t1 {
+            font-size: 13px;
+            color: var(--ink);
+        }
+
+        .sheetRowText .t2 {
+            font-size: 11px;
+            color: var(--muted);
+        }
+
+        .sheetText {
+            font-size: 13px;
+            line-height: 1.55;
+            color: var(--ink);
+            white-space: pre-wrap;
+            border-left: 2px solid var(--gold);
+            padding: 2px 0 2px 12px;
+        }
+
+        .sheetMuted {
+            font-size: 12px;
+            color: var(--muted);
+            font-style: italic;
+        }
+
+        .cmpTop {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .cmpSide {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            min-width: 0;
+        }
+
+        .cmpSide.right {
+            flex-direction: row-reverse;
+            text-align: right;
+        }
+
+        .cmpSide.right .cmpSideInfo {
+            align-items: flex-end;
+        }
+
+        .cmpSide .sheetPortrait {
+            width: 72px;
+            height: 72px;
+        }
+
+        .cmpSideInfo {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex: 1;
+        }
+
+        .cmpSideName {
+            font-family: var(--font-title);
+            font-size: 16px;
+            color: var(--gold-b);
+        }
+
+        .cmpSide .picker {
+            width: 100%;
+        }
+
+        .cmpVs {
+            font-family: var(--font-title);
+            font-size: 12px;
+            color: var(--muted);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 5px 14px;
+            background: var(--surface-2);
+        }
+
+        .cmpRows {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            background: rgba(0, 0, 0, .22);
+        }
+
+        .cmpRow {
+            display: grid;
+            grid-template-columns: 1fr 150px 1fr;
+            align-items: center;
+            border-bottom: 1px solid var(--border-soft);
+        }
+
+        .cmpRow:last-child {
+            border-bottom: none;
+        }
+
+        .cmpRow.section {
+            background: rgba(201, 162, 39, .08);
+        }
+
+        .cmpRow.section .cmpKey {
+            grid-column: 1 / -1;
+            color: var(--gold);
+            font-family: var(--font-title);
+            font-size: 12px;
+            letter-spacing: 0;
+            text-transform: none;
+        }
+
+        .cmpVal {
+            padding: 7px 14px;
+            color: var(--muted);
+        }
+
+        .cmpVal.a {
+            text-align: left;
+        }
+
+        .cmpVal.b {
+            text-align: right;
+        }
+
+        .cmpVal .n {
+            font-family: var(--font-title);
+            font-size: 15px;
+        }
+
+        .cmpVal.win {
+            color: var(--gold-b);
+        }
+
+        .cmpVal.win .n {
+            font-size: 19px;
+        }
+
+        .cmpVal .mark {
+            font-size: 9px;
+            color: var(--gold);
+            vertical-align: middle;
+            margin: 0 5px;
+        }
+
+        .cmpKey {
+            text-align: center;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            color: var(--muted);
+            padding: 6px 4px;
+        }
+
+        .cmpRow.sub .cmpVal {
+            padding: 4px 26px;
+            font-size: 12px;
+        }
+
+        .cmpRow.sub .cmpVal .n {
+            font-size: 12px;
+        }
+
+        .cmpRow.sub .cmpVal.win .n {
+            font-size: 13px;
+        }
+
+        .cmpRow.sub .cmpKey {
+            font-size: 10px;
+            text-transform: none;
+            letter-spacing: 0;
+        }
+
+        .cmpPill {
+            display: inline-block;
+            margin-left: 6px;
+            font-size: 10px;
+            padding: 1px 7px;
+            border-radius: 999px;
+            background: var(--gold);
+            color: #1b1207;
+            font-weight: bold;
+        }
+
+        .cmpPill.neg {
+            background: #8a2f2f;
+            color: #f4dccb;
+        }
+
+        .cmpPill.eq {
+            background: var(--surface-2);
+            color: var(--muted);
+            border: 1px solid var(--border-soft);
+        }
+
+        .scanAdder {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .scanAdder input[type=text] {
+            flex: 1;
+            min-width: 160px;
+        }
+
+        .galGrid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .scanCard {
+            position: relative;
+            aspect-ratio: 3 / 4;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            background-color: var(--surface-2);
+            background-size: cover;
+            background-position: center;
+            cursor: zoom-in;
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, .55);
+        }
+
+        .scanCard:hover {
+            border-color: var(--gold);
+        }
+
+        .scanName {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            padding: 5px 9px;
+            font-size: 11px;
+            color: var(--ink);
+            background: linear-gradient(transparent, rgba(0, 0, 0, .85));
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .scanTools {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            display: flex;
+            gap: 5px;
+            opacity: 0;
+            transition: opacity .15s;
+        }
+
+        .scanCard:hover .scanTools {
+            opacity: 1;
+        }
+
+        .scanBtn {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            background: rgba(0, 0, 0, .65);
+            color: var(--gold-b);
+            cursor: pointer;
+        }
+
+        .scanBtn .ic {
+            width: 12px;
+            height: 12px;
+        }
+
+        .scanBtn.rm {
+            color: #e98b7a;
+        }
+
+        .groupHead {
+            grid-column: 1 / -1;
+            font-family: var(--font-title);
+            font-size: 12px;
+            color: var(--gold);
+            letter-spacing: .5px;
+            padding: 9px 2px 3px 2px;
+            border-bottom: 1px solid var(--border-soft);
+        }
+
+        .attrMod {
+            font-size: 11px;
+            margin-left: 6px;
+            font-family: var(--font-title);
+        }
+
+        .attrMod.up {
+            color: #7cc981;
+        }
+
+        .attrMod.down {
+            color: #e0705f;
+        }
+
+        .attrBase {
+            font-size: 10px;
+            color: var(--muted);
+            margin: -4px 0 7px;
+        }
+
+        .badge.up {
+            border-color: #4c7a4f;
+            color: #8bd48f;
+            background: rgba(76, 122, 79, .16);
+        }
+
+        .badge.down {
+            border-color: #7a3b34;
+            color: #e0705f;
+            background: rgba(122, 59, 52, .18);
+        }
+
+        .equip {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr 1fr;
+            gap: 12px;
+            align-items: stretch;
+            width: 100%;
+        }
+
+        .equipCol {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-width: 0;
+        }
+
+        .equipCenter {
+            display: flex;
+        }
+
+        .equipPortrait {
+            width: 100%;
+            height: 100%;
+            min-height: 240px;
+        }
+
+        .eqCell {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            min-width: 0;
+        }
+
+        .eqSlot {
+            position: relative;
+            aspect-ratio: 1 / 1;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background-color: rgba(0, 0, 0, .35);
+            background-size: cover;
+            background-position: center;
+            overflow: hidden;
+            box-shadow: inset 0 0 34px rgba(0, 0, 0, .7);
+        }
+
+        .eqSlot.filled {
+            border-color: var(--gold);
+            box-shadow: inset 0 0 34px rgba(0, 0, 0, .55), 0 0 0 1px rgba(212, 175, 55, .25);
+        }
+
+        .eqSlot.clickable {
+            cursor: pointer;
+        }
+
+        .eqFallback {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--border);
+        }
+
+        .eqFallback .ic {
+            width: 40px;
+            height: 40px;
+        }
+
+        .eqSlot.hasImg .eqFallback {
+            display: none;
+        }
+
+        .eqTag {
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: rgba(0, 0, 0, .7);
+            border: 1px solid var(--border);
+            font-family: var(--font-title);
+            font-size: 10px;
+            letter-spacing: .4px;
+            text-transform: uppercase;
+            color: var(--gold-b);
+        }
+
+        .eqTag .ic {
+            width: 12px;
+            height: 12px;
+            color: var(--gold);
+        }
+
+        .eqName {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 2;
+            padding: 14px 8px 6px;
+            background: linear-gradient(transparent, rgba(0, 0, 0, .92));
+            font-size: 12px;
+            color: var(--ink);
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .eqMods {
+            display: flex;
+            justify-content: center;
+            min-width: 0;
+        }
+
+        .eqMods .badges {
+            justify-content: center;
+            gap: 4px;
+            min-width: 0;
+        }
+
+        .eqMods .badge {
+            font-size: 10px;
+            padding: 1px 6px;
+        }
+
+        .eqSelect {
+            position: absolute;
+            inset: 0;
+            z-index: 3;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .modsGrid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 8px;
+        }
+
+        .modField {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            border: 1px solid var(--border-soft);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, .2);
+            padding: 6px 9px;
+            font-family: var(--font-title);
+            font-size: 13px;
+            color: var(--gold-b);
+        }
+
+        .modField input {
+            width: 64px;
+        }
+
+        .lightbox {
+            position: fixed;
+            inset: 0;
+            z-index: 200;
+            background: rgba(4, 3, 2, .92);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 26px;
+            cursor: zoom-out;
+        }
+
+        .lightbox.show {
+            display: flex;
+        }
+
+        .lightbox img {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 8px;
+            box-shadow: 0 24px 70px rgba(0, 0, 0, .8);
+        }
+
+        .lbCap {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-family: var(--font-title);
+            font-size: 14px;
+            color: var(--gold-b);
+        }
+
+        .formGrid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 9px;
+        }
+
+        .field.full {
+            grid-column: 1 / -1;
+        }
+
+        .field label {
+            display: block;
+            font-size: 10.5px;
+            margin-bottom: 3px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: .5px;
+        }
+
+        .field input,
+        .field select,
+        .field textarea {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 12.5px;
+            background: var(--field);
+            color: var(--ink);
+        }
+
+        .field textarea {
+            resize: vertical;
+            min-height: 64px;
+        }
+
+        .field input:focus-visible,
+        .field select:focus-visible,
+        .field textarea:focus-visible {
+            outline: none;
+            border-color: var(--gold);
+        }
+
+        .photoRow {
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+            margin-bottom: 4px;
+        }
+
+        .photoPreview {
+            width: 84px;
+            height: 84px;
+            border-radius: 8px;
+            border: 2px solid var(--gold);
+            background-size: cover;
+            background-position: center;
+            background-color: var(--surface-2);
+            flex-shrink: 0;
+        }
+
+        .photoFields {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 12px;
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            font-family: inherit;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .btn .ic {
+            width: 14px;
+            height: 14px;
+        }
+
+        .btn:hover {
+            filter: brightness(1.15);
+        }
+
+        .btn-gold {
+            background: var(--gold);
+            color: #1b1207;
+            border-color: var(--gold);
+            font-weight: bold;
+        }
+
+        .btn-wood {
+            background: var(--surface-2);
+            color: var(--ink);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: #fff;
+            border-color: var(--danger);
+        }
+
+        .attrGrid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 8px;
+        }
+
+        .attrCard {
+            background: rgba(201, 162, 39, .05);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px;
+        }
+
+        .attrCard.required {
+            border-color: var(--gold);
+            background: rgba(201, 162, 39, .09);
+        }
+
+        .attrHead {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+
+        .attrHead .name {
+            font-family: var(--font-title);
+            font-size: 14px;
+            color: var(--gold-b);
+            width: 34px;
+        }
+
+        .attrHead input {
+            width: 54px;
+            font-size: 15px;
+            text-align: center;
+            font-weight: bold;
+            padding: 4px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--field);
+            color: var(--ink);
+        }
+
+        .attrHint {
+            font-size: 10.5px;
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .attrHint.ok {
+            color: #7fce7f;
+        }
+
+        .attrHint.warn {
+            color: #e58568;
+            font-weight: bold;
+        }
+
+        .reqBadge {
+            font-size: 8.5px;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            background: var(--gold);
+            color: #1b1207;
+            border-radius: 5px;
+            padding: 1px 5px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .splits {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .splitField {
+            display: flex;
+            flex-direction: column;
+            font-size: 10px;
+            color: var(--muted);
+            flex: 1;
+            min-width: 58px;
+        }
+
+        .splitField input {
+            width: 100%;
+            padding: 4px 5px;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            background: var(--field);
+            color: var(--ink);
+            font-family: inherit;
+        }
+
+        .dynList {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .entryRow {
+            display: flex;
+            gap: 7px;
+            background: rgba(255, 255, 255, .025);
+            border: 1px solid var(--border-soft);
+            border-radius: 8px;
+            padding: 6px;
+        }
+
+        .thumb {
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            border: 2px solid var(--gold);
+            background-size: cover;
+            background-position: center;
+            background-color: var(--surface-2);
+            flex-shrink: 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gold);
+            user-select: none;
+        }
+
+        .thumb .ic {
+            width: 15px;
+            height: 15px;
+        }
+
+        .thumb.hasImg .ic {
+            display: none;
+        }
+
+        .entryFields {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            min-width: 0;
+        }
+
+        .entryLine {
+            display: flex;
+            gap: 5px;
+        }
+
+        .entryLine input,
+        .entryLine select {
+            padding: 5px 7px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 12px;
+            background: var(--field);
+            color: var(--ink);
+            min-width: 0;
+        }
+
+        .entryLine input.grow {
+            flex: 1;
+        }
+
+        .entryLine input.num {
+            flex: 0 0 52px;
+        }
+
+        .entryLine select {
+            flex: 0 0 140px;
+        }
+
+        .entryLine input:disabled {
+            opacity: .6;
+        }
+
+        .rmBtn {
+            align-self: center;
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
+            border: none;
+            border-radius: 6px;
+            background: var(--danger);
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .rmBtn .ic {
+            width: 13px;
+            height: 13px;
+        }
+
+        .addEntryBtn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            align-self: flex-start;
+            padding: 6px 12px;
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            background: var(--surface-2);
+            color: var(--gold-b);
+            font-family: inherit;
+            font-size: 12px;
+            cursor: pointer;
+            margin-top: 7px;
+        }
+
+        .addEntryBtn .ic {
+            width: 13px;
+            height: 13px;
+        }
+
+        .addEntryBtn:hover {
+            border-color: var(--gold);
+        }
+
+        .membersGrid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+            gap: 7px;
+            margin-top: 6px;
+        }
+
+        .member {
+            width: 44px;
+            height: 44px;
+            border-radius: 7px;
+            border: 2px solid var(--gold);
+            background-size: cover;
+            background-position: center;
+            background-color: var(--surface-2);
+            position: relative;
+        }
+
+        .member .rm {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: none;
+            background: var(--danger);
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+
+        .member .rm .ic {
+            width: 10px;
+            height: 10px;
+        }
+
+        .addMemberRow {
+            display: flex;
+            gap: 7px;
+            margin-top: 9px;
+        }
+
+        .addMemberRow select {
+            flex: 1;
+            padding: 6px 8px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--field);
+            color: var(--ink);
+            font-family: inherit;
+            font-size: 12px;
+        }
+
+        .statCards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 12px;
+            width: 100%;
+        }
+
+        .statCard {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            outline: 1px solid var(--gold);
+            outline-offset: -5px;
+            border-radius: 10px;
+            padding: 14px;
+            color: var(--ink);
+        }
+
+        .statCard h3 {
+            font-family: var(--font-title);
+            color: var(--gold);
+            margin: 0 0 8px 0;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 5px;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .statCard h3 .ic {
+            width: 14px;
+            height: 14px;
+        }
+
+        .bigNum {
+            font-size: 34px;
+            font-family: var(--font-title);
+            color: var(--gold-b);
+            text-align: center;
+            display: block;
+        }
+
+        .statRow {
+            display: flex;
+            align-items: center;
+            padding: 2px 0;
+            font-size: 12px;
+        }
+
+        .statRow .info {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .statCard img {
+            width: 28px;
+            height: 28px;
+            border-radius: 5px;
+            object-fit: cover;
+            border: 1px solid var(--gold);
+            background: var(--surface-2);
+            flex-shrink: 0;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--surface-2);
+            color: var(--ink);
+            padding: 8px 16px;
+            border-radius: 7px;
+            border: 1px solid var(--gold);
+            font-size: 12px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, .7);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .3s;
+            z-index: 100;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 820px) {
+            body.left-open #edgeLeft,
+            body.right-open #edgeRight {
+                left: 0;
+                right: 0;
+            }
+
+            .sidebar {
+                position: fixed;
+                top: 0;
+                bottom: 0;
+                z-index: 80;
+                width: min(84vw, 320px);
+                transition: transform .28s ease;
+                box-shadow: 0 0 44px 14px rgba(0, 0, 0, .85);
+            }
+
+            #sidebarLeft {
+                left: 0;
+                transform: translateX(0);
+            }
+
+            #sidebarRight {
+                right: 0;
+                transform: translateX(0);
+            }
+
+            .sidebar.collapsed {
+                width: min(84vw, 320px);
+                padding: 58px 12px 12px 12px;
+                box-shadow: none;
+            }
+
+            #sidebarLeft.collapsed {
+                transform: translateX(-102%);
+            }
+
+            #sidebarRight.collapsed {
+                transform: translateX(102%);
+            }
+
+            .edgeBtn {
+                z-index: 90;
+            }
+
+            #editorRoot.narrow {
+                width: 100%;
+            }
+
+            .editorCard {
+                max-width: none;
+                padding: 14px 13px;
+            }
+
+            .center {
+                padding: 54px 12px 28px;
+            }
+
+            .brand span,
+            .saveStatus {
+                display: none;
+            }
+
+            .ioBtn {
+                font-size: 0;
+                gap: 0;
+                padding: 9px;
+            }
+
+            .ioBtn .ic {
+                width: 18px;
+                height: 18px;
+            }
+
+            .equip {
+                gap: 8px;
+            }
+
+            .equipCol {
+                gap: 8px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .equip {
+                grid-template-columns: 1fr 1.15fr 1fr;
+                gap: 6px;
+            }
+
+            .equipCol {
+                gap: 6px;
+            }
+
+            .eqTag span {
+                display: none;
+            }
+
+            .eqTag {
+                padding: 3px 5px;
+            }
+        }
+    </style>
+    <title>Admin RPG</title>
+</head>
+
+<body>
+
+    <div class="topBar">
+        <div class="brand">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round"><path d="M12 5c-2-1-5-1.3-8-1v14c3-.3 6 0 8 1 2-1 5-1.3 8-1V4c-3-.3-6 0-8 1z"/><path d="M12 5v14"/></svg>
+            <span>Grimório do Mestre</span>
+        </div>
+        <span class="saveStatus" id="saveStatus" title="Status do armazenamento"></span>
+        <div class="topActions">
+            <button class="ioBtn" id="btnStats">
+                <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16"/><path d="M7 20v-7"/><path d="M12 20V5"/><path d="M17 20v-10"/></svg>Estatísticas</button>
+            <button class="ioBtn" id="btnCompare">
+                <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M6 7l6-4 6 4"/><path d="M6 7l-3 7h6z"/><path d="M18 7l-3 7h6z"/></svg>Comparar</button>
+            <button class="ioBtn" id="btnGallery">
+                <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="M21 16l-5-5-9 9"/></svg>Galeria</button>
+            <button class="ioBtn" id="btnExport">
+                <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>Exportar</button>
+            <button class="ioBtn" id="btnImport">
+                <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4"/><path d="M7 9l5-5 5 5"/><path d="M5 21h14"/></svg>Importar</button>
+        </div>
+    </div>
+
+    <button class="edgeBtn" id="edgeLeft" title="Mostrar/ocultar painel">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round"><path d="M15 4l-8 8 8 8"/></svg>
+    </button>
+    <button class="edgeBtn" id="edgeRight" title="Mostrar/ocultar painel">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round"><path d="M9 4l8 8-8 8"/></svg>
+    </button>
+
+    <aside class="sidebar left-sidebar" id="sidebarLeft">
+        <div class="sideHead">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v14H4z"/><path d="M9 5v14"/></svg>
+            <select class="picker" id="leftPicker" title="O que mostrar nesta barra">
+                <option value="chars">Personagens</option>
+                <option value="items">Itens</option>
+                <option value="creatures">Criaturas</option>
+                <option value="groups">Grupos</option>
+            </select>
+        </div>
+        <input class="search" id="searchLeft" placeholder="Pesquisar...">
+        <div class="grid-list" id="listLeft"></div>
+    </aside>
+
+    <main class="center" id="center">
+        <div class="emptyState" id="emptyState">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v14H4z"/><path d="M8 3v18"/><path d="M12 8h5M12 12h5M12 16h3"/></svg>
+            <div>Selecione um registro na lista ao lado para visualizar e editar.<br>Use o botão
+                <strong>+</strong> para criar um novo.</div>
+        </div>
+        <div id="editorRoot"></div>
+    </main>
+
+    <aside class="sidebar right-sidebar" id="sidebarRight">
+        <div class="sideHead">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v14H4z"/><path d="M15 5v14"/></svg>
+            <select class="picker" id="rightPicker" title="O que mostrar nesta barra">
+                <option value="chars">Personagens</option>
+                <option value="items">Itens</option>
+                <option value="creatures">Criaturas</option>
+                <option value="groups">Grupos</option>
+            </select>
+        </div>
+        <input class="search" id="searchRight" placeholder="Pesquisar...">
+        <div class="grid-list" id="listRight"></div>
+    </aside>
+
+    <div class="toast" id="toast"></div>
+
+    <div class="lightbox" id="lightbox"></div>
+
+    <script>
+        'use strict';
+
+        const STORE_KEY = 'rpgAdminData';
+        const STORE_OK = (function () {
+            try { const k = '__rpg_test__'; localStorage.setItem(k, '1'); localStorage.removeItem(k); return true; }
+            catch (e) { return false; }
+        })();
+
+        const ATTRS = [
+            { key: 'Fis', splits: ['Braços', 'Pernas'], required: true },
+            { key: 'Res', splits: ['Físico', 'Mental', 'Mágico'], required: true },
+            { key: 'Vel', splits: ['Agilidade', 'Corrida', 'Reflexos'], required: true },
+            { key: 'Atm', splits: ['Medo', 'Fome', 'Sede', 'Insônia'] },
+            { key: 'Mint', splits: ['Foco', 'Memória', 'Compreensão'] },
+            { key: 'Sns', splits: ['Visão', 'Audição', 'Olfato'] }
+        ];
+
+        const RARITIES = ['Comum', 'Incomum', 'Raro', 'Épico', 'Lendário'];
+
+        const CATEGORIES = ['Arma', 'Consumível', 'Artefato', 'Armadura'];
+        const ARMOR_SLOTS = ['Cabeça', 'Corpo', 'Pernas'];
+        const SLOTS = [
+            { key: 'mao1', name: 'Mão 1', cat: 'Arma' },
+            { key: 'mao2', name: 'Mão 2', cat: 'Arma' },
+            { key: 'artefato', name: 'Artefato', cat: 'Artefato' },
+            { key: 'cabeca', name: 'Cabeça', cat: 'Armadura', armor: 'Cabeça' },
+            { key: 'corpo', name: 'Corpo', cat: 'Armadura', armor: 'Corpo' },
+            { key: 'pernas', name: 'Pernas', cat: 'Armadura', armor: 'Pernas' }
+        ];
+
+        const ICONS = {
+            person: '<circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5"/>',
+            id: '<rect x="4" y="5" width="16" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M6.6 16c.6-1.3 1.6-1.9 2.4-1.9s1.8.6 2.4 1.9"/><path d="M14 10h4M14 14h3"/>',
+            sliders: '<circle cx="16" cy="7" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="17" cy="17" r="2"/><path d="M3 7h11M18 7h3M3 12h3M10 12h11M3 17h12M19 17h2"/>',
+            bolt: '<path d="M13 3L5 13h6l-1 8 8-10h-6z"/>',
+            bag: '<path d="M6 8a6 6 0 0 1 12 0v11a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/><path d="M6 13h12"/>',
+            pencil: '<path d="M4 20h4L20 8l-4-4L4 16z"/><path d="M14 6l4 4"/>',
+            tag: '<path d="M3 11V4h7l10 10-7 7z"/><circle cx="7.5" cy="7.5" r="1.4"/>',
+            text: '<path d="M4 6h16M4 10h16M4 14h10M4 18h7"/>',
+            paw: '<circle cx="6" cy="11" r="1.8"/><circle cx="10" cy="7" r="1.8"/><circle cx="14" cy="7" r="1.8"/><circle cx="18" cy="11" r="1.8"/><path d="M12 13c-2.8 0-5 2-5 4.2A2.8 2.8 0 0 0 9.8 20c.9 0 1.5-.5 2.2-.5s1.3.5 2.2.5A2.8 2.8 0 0 0 17 17.2C17 15 14.8 13 12 13z"/>',
+            users: '<circle cx="9" cy="9" r="3"/><path d="M3.5 19c0-2.8 2.5-4.8 5.5-4.8s5.5 2 5.5 4.8"/><path d="M16 6.2A3 3 0 0 1 16 12"/><path d="M18.5 19c0-1.9-.9-3.4-2.3-4.3"/>',
+            bars: '<path d="M4 20h16"/><path d="M7 20v-7"/><path d="M12 20V5"/><path d="M17 20v-10"/>',
+            download: '<path d="M12 3v11"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/>',
+            trash: '<path d="M4 7h16"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/><path d="M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/>',
+            plus: '<path d="M12 5v14M5 12h14"/>',
+            x: '<path d="M6 6l12 12M18 6L6 18"/>',
+            check: '<path d="M5 12.5l4.5 4.5L19 7"/>',
+            compare: '<path d="M12 3v18"/><path d="M6 7l6-4 6 4"/><path d="M6 7l-3 7h6z"/><path d="M18 7l-3 7h6z"/>',
+            sword: '<path d="M20 3l-9 9"/><path d="M20 3v5M20 3h-5"/><path d="M11 12l-7 7"/><path d="M3 21l3-1 1-3-3 1z"/>',
+            shield: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',
+            gem: '<path d="M6 3h12l3 6-9 12L3 9z"/><path d="M3 9h18"/><path d="M9 3l-3 6 6 12 6-12-3-6"/>',
+            flask: '<path d="M9 3h6"/><path d="M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3"/>',
+            image: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="M21 16l-5-5-9 9"/>'
+        };
+
+        function icon(name) {
+            const NS = 'http://www.w3.org/2000/svg';
+            const s = document.createElementNS(NS, 'svg');
+            s.setAttribute('viewBox', '0 0 24 24');
+            s.setAttribute('fill', 'none');
+            s.setAttribute('stroke', 'currentColor');
+            s.setAttribute('stroke-width', '2');
+            s.setAttribute('stroke-linecap', 'round');
+            s.setAttribute('stroke-linejoin', 'round');
+            s.setAttribute('class', 'ic');
+            s.innerHTML = ICONS[name] || '';
+            return s;
+        }
+
+        const SAMPLE = {
+            characters: [
+                {
+                    id: 'c-mike', nome: 'Mike', race: 'Humano', charClass: 'Guerreiro', level: 3,
+                    hp: 18, hpMax: 22,
+                    imageURL: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ8u3lgZww_N10Jl6crreNuS2SOPcSnB7cKheVeJfSLPlzfsT5sbOGGe0g&s=10',
+                    attributes: { Fis: 4, Res: 3, Vel: 2, Atm: 1, Mint: 1, Sns: 2 },
+                    derived: { 'Braços': 2, 'Pernas': 2, 'Físico': 2, 'Mental': 1, 'Mágico': 0, 'Agilidade': 1, 'Corrida': 1, 'Reflexos': 0, 'Medo': 0, 'Fome': 0, 'Sede': 1, 'Insônia': 0, 'Foco': 1, 'Memória': 0, 'Compreensão': 0, 'Visão': 1, 'Audição': 1, 'Olfato': 0 },
+                    skills: [
+                        { id: 's-ataque-poderoso', nome: 'Ataque Poderoso', imageURL: '', desc: 'Um golpe devastador com a arma principal.' }
+                    ],
+                    inventory: [
+                        { id: 'i-espada', itemId: 'it-espada', nome: 'Espada de Aço', imageURL: '', qtd: 1 },
+                        { id: 'i-pocao', itemId: 'it-pocao', nome: 'Poção de Cura', imageURL: '', qtd: 2 },
+                        { id: 'i-corda', itemId: null, nome: 'Corda (15m)', imageURL: '', qtd: 3 }
+                    ],
+                    notes: 'Nunca revisou o passado. Evita o assunto.'
+                },
+                {
+                    id: 'c-rob', nome: 'Rob', race: 'Elfo', charClass: 'Mago', level: 2,
+                    hp: 8, hpMax: 12,
+                    imageURL: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRi2qXgEgZ7oKrUKRL0H-L1HeyIVtlDHMisUQ4mgDcQqQ&s=10',
+                    attributes: { Fis: 1, Res: 2, Vel: 3, Atm: 2, Mint: 4, Sns: 3 },
+                    derived: { 'Braços': 0, 'Pernas': 1, 'Físico': 1, 'Mental': 1, 'Mágico': 1, 'Agilidade': 1, 'Corrida': 1, 'Reflexos': 1, 'Medo': 1, 'Fome': 0, 'Sede': 0, 'Insônia': 1, 'Foco': 2, 'Memória': 1, 'Compreensão': 1, 'Visão': 1, 'Audição': 0, 'Olfato': 1 },
+                    skills: [],
+                    inventory: [],
+                    notes: 'Guarda a carteira do grupo.'
+                },
+                {
+                    id: 'c-brut', nome: 'Barbarian', race: 'Ogro', charClass: 'Bárbaro', level: 4,
+                    hp: 30, hpMax: 30,
+                    imageURL: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTFjebBRn6NLKjtMSjI6s-yBpr-qPdZoeWWwsMOsbPsCg&s=10',
+                    attributes: { Fis: 6, Res: 5, Vel: 3, Atm: 2, Mint: 0, Sns: 1 },
+                    derived: { 'Braços': 4, 'Pernas': 2, 'Físico': 3, 'Mental': 1, 'Mágico': 1, 'Agilidade': 1, 'Corrida': 2, 'Reflexos': 0, 'Medo': 0, 'Fome': 1, 'Sede': 1, 'Insônia': 0, 'Foco': 0, 'Memória': 0, 'Compreensão': 0, 'Visão': 1, 'Audição': 0, 'Olfato': 0 },
+                    skills: [],
+                    inventory: [],
+                    notes: ''
+                }
+            ],
+            items: [
+                { id: 'it-espada', nome: 'Espada Longa', tipo: 'Arma', categoria: 'Arma', raridade: 'Comum', imageURL: '', mods: { Fis: 1 }, desc: 'Uma espada longa de aço simples.' },
+                { id: 'it-pocao', nome: 'Poção de Cura', tipo: 'Poção', categoria: 'Consumível', raridade: 'Incomum', imageURL: '', mods: {}, desc: 'Recupera 2d4 HP quando bebida.' },
+                { id: 'it-elmo', nome: 'Elmo de Ferro', tipo: 'Elmo', categoria: 'Armadura', slot: 'Cabeça', raridade: 'Comum', imageURL: '', mods: { Res: 1 }, desc: 'Protege a cabeça.' },
+                { id: 'it-peitoral', nome: 'Peitoral de Couro', tipo: 'Peitoral', categoria: 'Armadura', slot: 'Corpo', raridade: 'Comum', imageURL: '', mods: { Res: 1, Vel: -1 }, desc: 'Couro curtido e leve.' },
+                { id: 'it-anel', nome: 'Anel de Prata', tipo: 'Anel', categoria: 'Artefato', raridade: 'Raro', imageURL: '', mods: { Vel: 1, Mint: 1 }, desc: 'Aumenta os reflexos de quem o usa.' }
+            ],
+            creatures: [
+                {
+                    id: 'cr-goblin', nome: 'Goblin Batedor', criaturaTipo: 'Humanoide', tags: 'fraco, rápido',
+                    hp: 6, hpMax: 6,
+                    imageURL: '',
+                    attributes: { Fis: 2, Res: 1, Vel: 4, Atm: 1, Mint: 1, Sns: 2 },
+                    derived: { 'Braços': 1, 'Pernas': 1, 'Físico': 1, 'Mental': 0, 'Mágico': 0, 'Agilidade': 2, 'Corrida': 1, 'Reflexos': 1, 'Medo': 0, 'Fome': 1, 'Sede': 0, 'Insônia': 0, 'Foco': 0, 'Memória': 1, 'Compreensão': 0, 'Visão': 1, 'Audição': 1, 'Olfato': 0 },
+                    desc: 'Vive em tocas perto da estrada. Foge quando ferido.'
+                }
+            ],
+            groups: [
+                { id: 'g-alfa', nome: 'Comitiva Alfa', desc: '', members: ['c-mike', 'c-rob'] }
+            ],
+            scans: [
+                { id: 'sc-1', nome: 'Retrato — Mike', imageURL: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ8u3lgZww_N10Jl6crreNuS2SOPcSnB7cKheVeJfSLPlzfsT5sbOGGe0g&s=10' },
+                { id: 'sc-2', nome: 'Retrato — Rob', imageURL: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRi2qXgEgZ7oKrUKRL0H-L1HeyIVtlDHMisUQ4mgDcQqQ&s=10' }
+            ]
+        };
+
+        let DATA = load();
+
+        function uid(p) { return (p || 'id') + '-' + Math.random().toString(36).slice(2, 9); }
+
+        function load() {
+            try {
+                const raw = localStorage.getItem(STORE_KEY);
+                if (raw) return normalize(JSON.parse(raw));
+            } catch (e) { }
+            return normalize(SAMPLE);
+        }
+
+        function normalize(d) {
+            const base = { characters: [], items: [], creatures: [], groups: [], scans: [] };
+            const out = Object.assign(base, d || {});
+            (out.characters || []).forEach(c => {
+                c.id = c.id || uid('c');
+                c.attributes = c.attributes || {};
+                c.derived = c.derived || {};
+                ATTRS.forEach(a => {
+                    if (typeof c.attributes[a.key] !== 'number') c.attributes[a.key] = 0;
+                    a.splits.forEach(sp => { if (typeof c.derived[sp] !== 'number') c.derived[sp] = 0; });
+                });
+                c.skills = c.skills || [];
+                c.inventory = c.inventory || [];
+                c.scans = c.scans || [];
+                c.build = Object.assign({ mao1: null, mao2: null, artefato: null, cabeca: null, corpo: null, pernas: null }, c.build || {});
+                c.notes = c.notes || '';
+            });
+            (out.creatures || []).forEach(c => {
+                c.id = c.id || uid('cr');
+                c.attributes = c.attributes || {};
+                c.derived = c.derived || {};
+                ATTRS.forEach(a => {
+                    if (typeof c.attributes[a.key] !== 'number') c.attributes[a.key] = 0;
+                    a.splits.forEach(sp => { if (typeof c.derived[sp] !== 'number') c.derived[sp] = 0; });
+                });
+            });
+            (out.items || []).forEach(i => {
+                i.id = i.id || uid('it');
+                if (!i.categoria) {
+                    const t = String(i.tipo || '').toLowerCase();
+                    i.categoria = /po[çc]|consum/.test(t) ? 'Consumível'
+                        : /anel|colar|amuleto|artefat|rel[ií]quia/.test(t) ? 'Artefato'
+                            : /elmo|peito|armad|escudo|bota|capuz|luva|perna|cal[çc]a/.test(t) ? 'Armadura' : 'Arma';
+                }
+                if (i.categoria === 'Armadura' && !i.slot) i.slot = 'Corpo';
+                i.mods = i.mods || {};
+            });
+            (out.groups || []).forEach(g => { g.id = g.id || uid('g'); g.members = g.members || []; });
+            (out.scans || []).forEach(s => { s.id = s.id || uid('sc'); });
+            return out;
+        }
+
+        let saveTimer = null;
+        function setSaveStatus(text, warn) {
+            const s = document.getElementById('saveStatus');
+            if (!s) return;
+            s.textContent = text;
+            s.classList.add('show');
+            s.classList.toggle('warn', !!warn);
+        }
+        function persist() {
+            clearTimeout(saveTimer);
+            saveTimer = null;
+            if (!STORE_OK) { setSaveStatus('Armazenamento indisponível — exporte um JSON', true); return; }
+            try {
+                localStorage.setItem(STORE_KEY, JSON.stringify(DATA));
+                const d = new Date();
+                const p = n => String(n).padStart(2, '0');
+                setSaveStatus('Salvo ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds()), false);
+            } catch (e) {
+                setSaveStatus('Erro ao salvar (armazenamento cheio)', true);
+                toast('Erro ao salvar: armazenamento cheio. Exporte um JSON.');
+            }
+        }
+        function save() {
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(persist, 350);
+        }
+        function flushSave() { if (saveTimer) persist(); }
+
+        function el(tag, attrs, children) {
+            const n = document.createElement(tag);
+            if (attrs) Object.entries(attrs).forEach(([k, v]) => {
+                if (k === 'class') n.className = v;
+                else if (k === 'text') n.textContent = v == null ? '' : v;
+                else if (k === 'html') n.innerHTML = v;
+                else if (k.startsWith('on')) n.addEventListener(k.slice(2), v);
+                else if (k === 'style') n.style.cssText = v;
+                else n.setAttribute(k, v);
+            });
+            (children || []).forEach(c => { if (c) n.append(c); });
+            return n;
+        }
+
+        function numOr(v, fallback) {
+            const n = parseInt(v, 10);
+            return isNaN(n) ? (fallback || 0) : n;
+        }
+
+        function toast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            clearTimeout(t._h);
+            t._h = setTimeout(() => t.classList.remove('show'), 2000);
+        }
+
+        function pickImage(cb) {
+            const inp = el('input', { type: 'file', accept: 'image/*', style: 'display:none' });
+            inp.addEventListener('change', () => {
+                const f = inp.files && inp.files[0];
+                if (!f) return;
+                const r = new FileReader();
+                r.onload = () => cb(r.result);
+                r.readAsDataURL(f);
+            });
+            document.body.append(inp);
+            inp.click();
+            setTimeout(() => inp.remove(), 60000);
+        }
+
+        const COLLECTIONS = {
+            chars: { name: 'Personagens', list: 'characters', keys: ['nome', 'race', 'charClass'] },
+            items: { name: 'Itens', list: 'items', keys: ['nome', 'tipo', 'raridade', 'categoria'] },
+            creatures: { name: 'Criaturas', list: 'creatures', keys: ['nome', 'criaturaTipo', 'tags'] },
+            groups: { name: 'Grupos', list: 'groups', keys: ['nome'] }
+        };
+
+        let sideTab = { left: 'chars', right: 'items' };
+        let selection = { chars: null, items: null, creatures: null, groups: null };
+        let current = null;
+        let view = 'editor';
+        let edit = false;
+        let compare = { a: null, b: null };
+        function isMobile() { return window.matchMedia('(max-width: 820px)').matches; }
+        let sideOpen = { left: !isMobile(), right: !isMobile() };
+
+        function getList(tab) { return DATA[COLLECTIONS[tab].list] || []; }
+        function itemById(id) { return (DATA.items || []).find(i => i.id === id); }
+        function charById(id) { return (DATA.characters || []).find(c => c.id === id); }
+
+        function ownersOfItem(id) {
+            return (DATA.characters || []).filter(c => (c.inventory || []).some(e => e.itemId === id));
+        }
+
+        function compatibleItems(slot) {
+            return (DATA.items || []).filter(it => (it.categoria || 'Arma') === slot.cat
+                && (slot.cat !== 'Armadura' || (it.slot || 'Corpo') === slot.armor));
+        }
+
+        function buildMods(c) {
+            const m = {};
+            ATTRS.forEach(a => { m[a.key] = 0; });
+            SLOTS.forEach(s => {
+                const it = itemById((c.build || {})[s.key]);
+                if (it && it.mods) ATTRS.forEach(a => { const v = numOr(it.mods[a.key]); if (v) m[a.key] += v; });
+            });
+            return m;
+        }
+
+        function hasMods(m) { return !!m && ATTRS.some(a => numOr(m[a.key])); }
+
+        function modsLabel(m) {
+            const parts = ATTRS.filter(a => numOr(m && m[a.key])).map(a => (numOr(m[a.key]) > 0 ? '+' : '') + numOr(m[a.key]) + ' ' + a.key);
+            return parts.length ? parts.join(', ') : 'sem modificadores';
+        }
+
+        function iconForSlot(key) { return key === 'artefato' ? 'gem' : (key === 'mao1' || key === 'mao2') ? 'sword' : 'shield'; }
+        function iconForCat(cat) { return cat === 'Arma' ? 'sword' : cat === 'Consumível' ? 'flask' : cat === 'Artefato' ? 'gem' : 'shield'; }
+
+        function bgOf(o) {
+            return o.imageURL ? 'url("' + String(o.imageURL).replace(/["\\\n\r]/g, '') + '")' : '';
+        }
+
+        function makeBox(o, tab, count, side) {
+            const box = el('div', {
+                class: 'box' + (selection[tab] === o.id ? ' selected' : ''),
+                title: o.nome || '',
+                onclick: () => {
+                    selection[tab] = o.id; current = { type: tab, id: o.id }; view = 'editor'; edit = false;
+                    if (side && isMobile()) sideOpen[side] = false;
+                    render();
+                }
+            });
+            if (bgOf(o)) box.style.backgroundImage = bgOf(o);
+            box.append(el('div', { class: 'box-label', text: o.nome || '(sem nome)' }));
+            if (count) box.append(el('div', { class: 'box-count', text: count }));
+            return box;
+        }
+
+        function applyFilter(arr, keys, q) {
+            q = (q || '').trim().toLowerCase();
+            if (!q) return arr;
+            return arr.filter(o => keys.some(k => String(o[k] || '').toLowerCase().includes(q)));
+        }
+
+        function renderSideList(elId, searchId, tab, side) {
+            const host = document.getElementById(elId);
+            const q = document.getElementById(searchId).value;
+            host.innerHTML = '';
+            const conf = COLLECTIONS[tab];
+            const list = applyFilter(getList(tab), conf.keys, q);
+            if (tab === 'items') {
+                CATEGORIES.forEach(cat => {
+                    const group = list.filter(o => (o.categoria || 'Arma') === cat);
+                    if (!group.length) return;
+                    host.append(el('div', { class: 'groupHead', text: cat + ' · ' + group.length }));
+                    group.forEach(o => host.append(makeBox(o, tab, ownersOfItem(o.id).length || '', side)));
+                });
+            } else {
+                list.forEach(o => {
+                    let count;
+                    if (tab === 'chars') count = (o.inventory || []).length || '';
+                    if (tab === 'groups') count = (o.members || []).length || '';
+                    host.append(makeBox(o, tab, count, side));
+                });
+            }
+            host.append(el('div', {
+                class: 'box addNew', title: 'Novo ' + conf.name,
+                onclick: () => { if (side && isMobile()) sideOpen[side] = false; createNew(tab); }
+            }, [icon('plus')]));
+        }
+
+        function renderLists() {
+            document.getElementById('leftPicker').value = sideTab.left;
+            document.getElementById('rightPicker').value = sideTab.right;
+            renderSideList('listLeft', 'searchLeft', sideTab.left, 'left');
+            renderSideList('listRight', 'searchRight', sideTab.right, 'right');
+        }
+
+        function applyLayout() {
+            document.body.classList.toggle('left-open', sideOpen.left);
+            document.body.classList.toggle('right-open', sideOpen.right);
+            document.getElementById('sidebarLeft').classList.toggle('collapsed', !sideOpen.left);
+            document.getElementById('sidebarRight').classList.toggle('collapsed', !sideOpen.right);
+            document.getElementById('edgeLeft').title = sideOpen.left ? 'Ocultar painel' : 'Mostrar painel';
+            document.getElementById('edgeRight').title = sideOpen.right ? 'Ocultar painel' : 'Mostrar painel';
+        }
+
+        function secTitle(name, text) {
+            return el('h3', {}, [icon(name), el('span', { text: text })]);
+        }
+
+        function field(label, value, oninput, opts) {
+            opts = opts || {};
+            const input = opts.textarea
+                ? el('textarea', { rows: opts.rows || 3 })
+                : el('input', { type: opts.type || 'text' });
+            input.value = value == null ? '' : value;
+            if (opts.placeholder) input.placeholder = opts.placeholder;
+            input.addEventListener('input', () => oninput(input.value));
+            const f = el('div', { class: 'field' + (opts.full ? ' full' : '') });
+            f.append(el('label', { text: label }), input);
+            return f;
+        }
+
+        function photoSection(o) {
+            const preview = el('div', { class: 'photoPreview' });
+            const urlInput = el('input', { type: 'text', placeholder: 'Cole o link de uma imagem (opcional)' });
+            const sync = () => {
+                if (o.imageURL) {
+                    preview.style.backgroundImage = bgOf(o);
+                    preview.style.backgroundSize = 'cover';
+                } else {
+                    preview.style.backgroundImage = '';
+                }
+            };
+            urlInput.addEventListener('input', () => { o.imageURL = urlInput.value; sync(); save(); });
+            const fileBtn = el('button', {
+                class: 'btn btn-gold',
+                onclick: () => pickImage(data => { o.imageURL = data; urlInput.value = '[imagem carregada]'; sync(); save(); })
+            }, [icon('image'), 'Enviar imagem']);
+            const wraps = el('div', { class: 'photoFields' });
+            wraps.append(el('div', { class: 'field', html: '<label>Imagem (URL ou upload)</label>' }), urlInput, fileBtn);
+            sync();
+            return el('div', { class: 'photoRow' }, [preview, wraps]);
+        }
+
+        function attrSection(o) {
+            const grid = el('div', { class: 'attrGrid' });
+            ATTRS.forEach(a => {
+                const total = el('input', { type: 'number', min: 0, value: o.attributes[a.key] });
+                const hint = el('span', { class: 'attrHint' });
+                const upd = () => {
+                    const used = a.splits.reduce((s, k) => s + numOr(o.derived[k]), 0);
+                    const tot = numOr(o.attributes[a.key]);
+                    const ok = used === tot;
+                    hint.textContent = ok ? 'OK ' + used + '/' + tot : used + ' de ' + tot;
+                    hint.className = 'attrHint ' + (ok ? 'ok' : 'warn');
+                };
+                total.addEventListener('input', () => { o.attributes[a.key] = numOr(total.value); upd(); save(); });
+                const splits = el('div', { class: 'splits' });
+                a.splits.forEach(sp => {
+                    const inp = el('input', { type: 'number', min: 0, value: o.derived[sp] });
+                    inp.addEventListener('input', () => { o.derived[sp] = numOr(inp.value); upd(); save(); });
+                    splits.append(el('label', { class: 'splitField', text: sp }, [inp]));
+                });
+                upd();
+                const head = el('div', { class: 'attrHead' }, [el('span', { class: 'name', text: a.key })]);
+                if (a.required) head.append(el('span', { class: 'reqBadge', text: 'principal' }));
+                head.append(total, hint);
+                grid.append(el('div', { class: 'attrCard' + (a.required ? ' required' : '') }, [head, splits]));
+            });
+            return el('div', {}, [
+                el('div', { class: 'subtitle', text: 'Fis, Res e Vel são os atributos principais (obrigatórios). Atm, Mint e Sns são opcionais.' }),
+                grid
+            ]);
+        }
+
+        function dynRow(onRemove) {
+            const row = el('div', { class: 'entryRow' });
+            const fields = el('div', { class: 'entryFields' });
+            const rm = el('button', { class: 'rmBtn', title: 'Remover', onclick: onRemove }, [icon('x')]);
+            row.append(fields, rm);
+            return { row, fields, rm };
+        }
+
+        function skillSection(c) {
+            const list = el('div', { class: 'dynList' });
+            const addBtn = el('button', {
+                class: 'addEntryBtn',
+                onclick: () => { c.skills.push({ id: uid('s'), nome: '', imageURL: '' }); save(); rebuild(); }
+            }, [icon('plus'), 'Habilidade']);
+            const wrap = el('div', {}, [list, addBtn]);
+            function rowFor(s) {
+                const nameIn = el('input', { class: 'grow', placeholder: 'Nome da habilidade', value: s.nome || '' });
+                nameIn.addEventListener('input', () => { s.nome = nameIn.value; save(); });
+                const li = dynRow(() => {
+                    const ix = c.skills.indexOf(s);
+                    if (ix >= 0) c.skills.splice(ix, 1);
+                    persist(); rebuild(); renderLists();
+                });
+                const thumb = el('div', {
+                    class: 'thumb' + (s.imageURL ? ' hasImg' : ''),
+                    style: s.imageURL ? 'background-image:' + bgOf(s) : '',
+                    onclick: () => pickImage(d => {
+                        s.imageURL = d;
+                        thumb.style.backgroundImage = bgOf(s);
+                        thumb.classList.add('hasImg');
+                        save();
+                    })
+                }, [icon('image')]);
+                const urlIn = el('input', { class: 'grow', placeholder: 'URL da imagem (opcional)', value: s.imageURL && !s.imageURL.startsWith('data:') ? s.imageURL : '' });
+                urlIn.addEventListener('input', () => {
+                    s.imageURL = urlIn.value;
+                    thumb.style.backgroundImage = bgOf(s);
+                    thumb.classList.toggle('hasImg', !!s.imageURL);
+                    save();
+                });
+                li.fields.append(el('div', { class: 'entryLine' }, [nameIn]), el('div', { class: 'entryLine' }, [urlIn]));
+                li.row.prepend(thumb);
+                return li.row;
+            }
+            function rebuild() {
+                list.innerHTML = '';
+                (c.skills || []).forEach(s => list.append(rowFor(s)));
+            }
+            rebuild();
+            return wrap;
+        }
+
+        function inventorySection(c) {
+            const wrap = el('div', {});
+            function rebuild() {
+                wrap.innerHTML = '';
+                const list = el('div', { class: 'dynList' });
+                (c.inventory || []).forEach(entry => list.append(rowFor(entry)));
+                wrap.append(list, el('button', {
+                    class: 'addEntryBtn',
+                    onclick: () => { const e = { id: uid('inv'), itemId: null, nome: '', imageURL: '', qtd: 1 }; c.inventory.push(e); save(); rebuild(); }
+                }, [icon('plus'), 'Item carregado']));
+            }
+            function rowFor(entry) {
+                const linked = itemById(entry.itemId);
+                const nameIn = el('input', { class: 'grow', placeholder: 'O que ele carrega?', value: linked ? linked.nome : (entry.nome || '') });
+                nameIn.disabled = !!linked;
+                nameIn.addEventListener('input', () => { if (!linked) { entry.nome = nameIn.value; save(); } });
+                const qtdIn = el('input', { class: 'num', type: 'number', min: 1, value: entry.qtd == null ? 1 : entry.qtd, title: 'Quantidade' });
+                qtdIn.addEventListener('input', () => { entry.qtd = numOr(qtdIn.value, 1); save(); });
+                const sel = el('select', { title: 'Vincular a um item do registro' },
+                    [el('option', { value: '', text: '— livre —' })]
+                        .concat((DATA.items || []).map(i => el('option', { value: i.id, text: i.nome || '(sem nome)' })))
+                );
+                sel.value = entry.itemId || '';
+                sel.addEventListener('change', () => {
+                    entry.itemId = sel.value || null;
+                    const nowLink = itemById(entry.itemId);
+                    if (nowLink) entry.nome = nowLink.nome;
+                    persist(); renderLists(); rebuild();
+                });
+                const urlIn = el('input', { class: 'grow', placeholder: 'URL da imagem (opcional)', value: entry.imageURL && !entry.imageURL.startsWith('data:') ? entry.imageURL : '' });
+                urlIn.disabled = !!linked;
+                urlIn.addEventListener('input', () => { if (!linked) { entry.imageURL = urlIn.value; thumb.style.backgroundImage = bgOf(entry); thumb.classList.toggle('hasImg', !!entry.imageURL); save(); } });
+                const li = dynRow(() => {
+                    const ix = c.inventory.indexOf(entry);
+                    if (ix >= 0) c.inventory.splice(ix, 1);
+                    persist(); renderLists(); rebuild();
+                });
+                const thumb = el('div', {
+                    class: 'thumb' + (entry.imageURL ? ' hasImg' : ''),
+                    style: entry.imageURL ? 'background-image:' + bgOf(entry) : '',
+                    onclick: () => {
+                        if (linked) { toast('Item vinculado — desvincule para editar a imagem'); return; }
+                        pickImage(d => {
+                            entry.imageURL = d;
+                            thumb.style.backgroundImage = bgOf(entry);
+                            thumb.classList.add('hasImg');
+                            urlIn.value = '';
+                            save();
+                        });
+                    }
+                }, [icon('image')]);
+                li.fields.append(
+                    el('div', { class: 'entryLine' }, [sel, nameIn, qtdIn]),
+                    el('div', { class: 'entryLine' }, [urlIn])
+                );
+                li.row.prepend(thumb);
+                return li.row;
+            }
+            rebuild();
+            return wrap;
+        }
+
+        function membersSection(g) {
+            const wrap = el('div', { class: 'membersGrid' });
+            function rebuild() {
+                wrap.innerHTML = '';
+                (g.members || []).forEach(id => {
+                    const c = charById(id);
+                    if (!c) return;
+                    const m = el('div', { class: 'member', title: c.nome || '' });
+                    if (c.imageURL) m.style.backgroundImage = bgOf(c);
+                    m.append(el('button', {
+                        class: 'rm', title: 'Remover do grupo',
+                        onclick: () => {
+                            g.members.splice(g.members.indexOf(id), 1);
+                            persist(); renderLists(); rebuild();
+                        }
+                    }, [icon('x')]));
+                    wrap.append(m);
+                });
+                if (!(g.members || []).length) wrap.append(el('div', { class: 'list-empty', text: 'Nenhum membro ainda.' }));
+            }
+            const sel = el('select', {}, [el('option', { value: '', text: 'Adicionar personagem...' })]
+                .concat((DATA.characters || []).filter(c => !(g.members || []).includes(c.id))
+                    .map(c => el('option', { value: c.id, text: c.nome || '(sem nome)' }))));
+            const addBtn = el('button', {
+                class: 'btn btn-gold',
+                onclick: () => {
+                    if (!sel.value) return;
+                    g.members = g.members || [];
+                    if (!g.members.includes(sel.value)) g.members.push(sel.value);
+                    persist(); renderLists(); rebuild();
+                    sel.value = '';
+                }
+            }, [icon('plus'), 'Adicionar']);
+            rebuild();
+            return el('div', {}, [wrap, el('div', { class: 'addMemberRow' }, [sel, addBtn])]);
+        }
+
+        function statView() {
+            const chars = DATA.characters || [];
+            const items = DATA.items || [];
+            const creatures = DATA.creatures || [];
+            const groups = DATA.groups || [];
+            const cards = [];
+
+            const c1 = el('div', { class: 'statCard' }, [
+                secTitle('bars', 'Registros'),
+                el('span', { class: 'bigNum', text: chars.length + items.length + creatures.length }),
+                el('div', { class: 'statRow' }, [el('span', { text: 'Personagens' }), el('strong', { text: chars.length })]),
+                el('div', { class: 'statRow' }, [el('span', { text: 'Itens' }), el('strong', { text: items.length })]),
+                el('div', { class: 'statRow' }, [el('span', { text: 'Criaturas' }), el('strong', { text: creatures.length })]),
+                el('div', { class: 'statRow' }, [el('span', { text: 'Grupos' }), el('strong', { text: groups.length })])
+            ]);
+            cards.push(c1);
+
+            const c2 = el('div', { class: 'statCard' }, [secTitle('bag', 'Itens por dono')]);
+            chars.forEach(c => {
+                c2.append(el('div', { class: 'statRow' }, [
+                    el('span', { class: 'info' }, [imgFor(c), String(c.nome || '(sem nome)')]),
+                    el('strong', { text: (c.inventory || []).length })
+                ]));
+            });
+            if (!chars.length) c2.append(el('div', { class: 'list-empty', text: '—' }));
+            cards.push(c2);
+
+            const c3 = el('div', { class: 'statCard' }, [secTitle('users', 'Quem possui cada item')]);
+            items.forEach(i => {
+                const n = ownersOfItem(i.id).length;
+                c3.append(el('div', { class: 'statRow' }, [
+                    el('span', { class: 'info' }, [imgFor(i), String(i.nome || '(sem nome)')]),
+                    el('strong', { text: n + (n === 1 ? ' dono' : ' donos') })
+                ]));
+            });
+            if (!items.length) c3.append(el('div', { class: 'list-empty', text: '—' }));
+            cards.push(c3);
+
+            const c4 = el('div', { class: 'statCard' }, [secTitle('tag', 'Raridades no registro')]);
+            RARITIES.forEach(r => {
+                const n = items.filter(i => (i.raridade || 'Comum') === r).length;
+                c4.append(el('div', { class: 'statRow' }, [el('span', { class: 'info', text: r }), el('strong', { text: n })]));
+            });
+            cards.push(c4);
+
+            return el('div', { class: 'statCards' }, cards);
+
+            function imgFor(o) {
+                if (o.imageURL) return el('img', { src: o.imageURL, alt: '' });
+                return el('img', { style: 'visibility:hidden', alt: '' });
+            }
+        }
+
+        function cardHeader(o, type) {
+            return el('h2', {}, [
+                el('span', { text: o.nome || '(sem nome)' }),
+                el('div', { class: 'cardActions' }, [
+                    el('button', { class: 'btn btn-gold', onclick: () => { edit = !edit; render(); } },
+                        [icon(edit ? 'check' : 'pencil'), edit ? 'Concluir' : 'Editar']),
+                    el('button', { class: 'btn btn-danger', onclick: () => deleteEntity(type, o) }, [icon('trash'), 'Excluir'])
+                ])
+            ]);
+        }
+
+        function editHint() {
+            return el('div', { class: 'subtitle', text: edit ? 'Modo edição — alterações salvas automaticamente.' : 'Visualização — clique em Editar para alterar.' });
+        }
+
+        function attrView(o, mods) {
+            mods = mods || {};
+            const grid = el('div', { class: 'sheetAttrs' });
+            ATTRS.forEach(a => {
+                const base = numOr(o.attributes[a.key]);
+                const mod = numOr(mods[a.key]);
+                const head = el('div', { class: 'attrViewHead' }, [el('span', { class: 'k', text: a.key })]);
+                const t = el('span', { class: 't', text: base + mod });
+                if (mod) t.append(el('span', { class: 'attrMod ' + (mod > 0 ? 'up' : 'down'), text: (mod > 0 ? '+' : '') + mod }));
+                head.append(t);
+                const card = el('div', { class: 'attrView' + (a.required ? ' required' : '') }, [head]);
+                if (mod) card.append(el('div', { class: 'attrBase', text: 'base ' + base }));
+                const sp = el('div', { class: 'attrViewSplits' });
+                a.splits.forEach(s => sp.append(el('span', { class: 'chip' }, [
+                    el('span', { text: s }), el('b', { text: numOr(o.derived[s]) })
+                ])));
+                card.append(sp);
+                grid.append(card);
+            });
+            return grid;
+        }
+
+        function modsChips(m) {
+            const wrap = el('div', { class: 'badges' });
+            ATTRS.filter(a => numOr(m && m[a.key])).forEach(a => {
+                const v = numOr(m[a.key]);
+                wrap.append(el('span', { class: 'badge ' + (v > 0 ? 'up' : 'down'), text: (v > 0 ? '+' : '') + v + ' ' + a.key }));
+            });
+            return wrap;
+        }
+
+        function modsEditor(i) {
+            const grid = el('div', { class: 'modsGrid' });
+            ATTRS.forEach(a => {
+                const inp = el('input', { type: 'number', value: numOr(i.mods[a.key]) });
+                inp.addEventListener('input', () => { i.mods[a.key] = numOr(inp.value); save(); });
+                grid.append(el('label', { class: 'modField' }, [el('span', { text: a.key }), inp]));
+            });
+            return grid;
+        }
+
+        const EQUIP_LEFT = ['mao1', 'mao2', 'artefato'];
+        const EQUIP_RIGHT = ['cabeca', 'corpo', 'pernas'];
+
+        function slotByKey(key) { return SLOTS.find(s => s.key === key); }
+
+        function equipSlot(c, slot, interactive) {
+            const id = (c.build || {})[slot.key];
+            const it = itemById(id);
+            const box = el('div', { class: 'eqSlot' + (it ? ' filled' : '') + (it && it.imageURL ? ' hasImg' : '') });
+            if (it && it.imageURL) box.style.backgroundImage = bgOf(it);
+            box.append(el('div', { class: 'eqTag' }, [icon(iconForSlot(slot.key)), el('span', { text: slot.name })]));
+            box.append(el('div', { class: 'eqFallback' }, [icon(it ? iconForCat(it.categoria) : iconForSlot(slot.key))]));
+            if (it) box.append(el('div', { class: 'eqName', text: it.nome || '(sem nome)' }));
+            if (interactive) {
+                const sel = el('select', { class: 'eqSelect', title: it ? it.nome : 'Equipar' },
+                    [el('option', { value: '', text: '— vazio —' })]
+                        .concat(compatibleItems(slot).map(x => el('option', { value: x.id, text: x.nome || '(sem nome)' }))));
+                sel.value = id || '';
+                sel.addEventListener('change', () => { c.build[slot.key] = sel.value || null; persist(); render(); });
+                box.append(sel);
+            } else if (it) {
+                box.classList.add('clickable');
+                box.addEventListener('click', () => { selection.items = it.id; current = { type: 'items', id: it.id }; view = 'editor'; edit = false; render(); });
+            }
+            const cell = el('div', { class: 'eqCell' }, [box]);
+            if (it && hasMods(it.mods)) cell.append(el('div', { class: 'eqMods' }, [modsChips(it.mods)]));
+            return cell;
+        }
+
+        function equipLayout(c, interactive) {
+            const left = el('div', { class: 'equipCol' });
+            const right = el('div', { class: 'equipCol' });
+            EQUIP_LEFT.forEach(k => left.append(equipSlot(c, slotByKey(k), interactive)));
+            EQUIP_RIGHT.forEach(k => right.append(equipSlot(c, slotByKey(k), interactive)));
+            const port = portraitBlock(c, 'person');
+            port.classList.add('equipPortrait');
+            return el('div', { class: 'equip' }, [left, el('div', { class: 'equipCenter' }, [port]), right]);
+        }
+
+        function buildView(c) { return equipLayout(c, false); }
+        function buildEditor(c) { return equipLayout(c, true); }
+
+        function sheetRow(img, title, sub) {
+            const r = el('div', { class: 'sheetRow' });
+            const th = el('div', { class: 'thumb' + (img ? ' hasImg' : '') });
+            if (img) th.style.backgroundImage = bgOf({ imageURL: img });
+            else th.append(icon('image'));
+            r.append(th, el('div', { class: 'sheetRowText' }, [
+                el('div', { class: 't1', text: title }),
+                sub ? el('div', { class: 't2', text: sub }) : null
+            ]));
+            return r;
+        }
+
+        function portraitBlock(o, fallbackIcon) {
+            const p = el('div', { class: 'sheetPortrait' });
+            if (o.imageURL) p.style.backgroundImage = bgOf(o);
+            else p.append(icon(fallbackIcon));
+            return p;
+        }
+
+        function hpBlock(hp, hpMax) {
+            hp = numOr(hp); hpMax = numOr(hpMax);
+            const pct = hpMax > 0 ? Math.max(0, Math.min(100, Math.round(hp / hpMax * 100))) : 0;
+            return el('div', {}, [
+                el('div', { class: 'hpHead' }, [el('span', { text: 'Pontos de vida' }), el('strong', { text: hp + ' / ' + hpMax })]),
+                el('div', { class: 'hpBar' }, [el('div', { class: 'hpFill' + (pct <= 25 ? ' low' : ''), style: 'width:' + pct + '%' })])
+            ]);
+        }
+
+        function openLightbox(url, caption) {
+            const lb = document.getElementById('lightbox');
+            lb.innerHTML = '';
+            lb.append(el('img', { src: url, alt: '' }));
+            if (caption) lb.append(el('div', { class: 'lbCap', text: caption }));
+            lb.classList.add('show');
+        }
+
+        function scanGrid(list, opts) {
+            opts = opts || {};
+            const grid = el('div', { class: 'galGrid' });
+            list.forEach(s => {
+                const card = el('div', { class: 'scanCard', title: s.nome || 'Ampliar' });
+                card.style.backgroundImage = bgOf(s);
+                card.addEventListener('click', () => openLightbox(s.imageURL, s.nome));
+                const tools = el('div', { class: 'scanTools' });
+                if (opts.onRename) tools.append(el('button', { class: 'scanBtn', title: 'Renomear',
+                    onclick: e => { e.stopPropagation(); const n = window.prompt('Nome do scan', s.nome || ''); if (n !== null) { s.nome = n; persist(); if (opts.onChange) opts.onChange(); } } }, [icon('pencil')]));
+                if (opts.onRemove) tools.append(el('button', { class: 'scanBtn rm', title: 'Remover',
+                    onclick: e => { e.stopPropagation(); opts.onRemove(s); } }, [icon('x')]));
+                if (tools.childNodes.length) card.append(tools);
+                if (s.nome) card.append(el('div', { class: 'scanName', text: s.nome }));
+                grid.append(card);
+            });
+            return grid;
+        }
+
+        function scanAdder(list, onChange, withGallery) {
+            const wrap = el('div', { class: 'scanAdder' });
+            const urlIn = el('input', { type: 'text', placeholder: 'Cole a URL de um scan (ou use Enviar imagem)...' });
+            const addFromUrl = () => {
+                const v = urlIn.value.trim();
+                if (!v) { toast('Cole uma URL ou use Enviar imagem.'); return; }
+                list.push({ id: uid('sc'), nome: '', imageURL: v });
+                urlIn.value = ''; persist(); onChange();
+            };
+            const addUrl = el('button', { class: 'btn btn-gold', onclick: addFromUrl }, [icon('plus'), 'Adicionar URL']);
+            urlIn.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addFromUrl(); } });
+            const upload = el('button', { class: 'btn', onclick: () => pickImage(d => {
+                list.push({ id: uid('sc'), nome: '', imageURL: d }); persist(); onChange();
+            }) }, [icon('image'), 'Enviar imagem']);
+            wrap.append(urlIn, upload, addUrl);
+            if (withGallery && (DATA.scans || []).length) {
+                const sel = el('select', { class: 'picker' }, [el('option', { value: '', text: 'Da galeria...' })]
+                    .concat(DATA.scans.map(s => el('option', { value: s.id, text: s.nome || 'scan ' + String(s.id).slice(-4) }))));
+                sel.addEventListener('change', () => {
+                    const src = (DATA.scans || []).find(x => x.id === sel.value);
+                    if (!src) return;
+                    list.push({ id: uid('sc'), nome: src.nome || '', imageURL: src.imageURL });
+                    sel.value = ''; persist(); onChange();
+                });
+                wrap.append(sel);
+            }
+            return wrap;
+        }
+
+        function scansEditor(c) {
+            const wrap = el('div', {});
+            function rebuild() {
+                wrap.innerHTML = '';
+                wrap.append(scanAdder(c.scans, rebuild, true));
+                if ((c.scans || []).length) {
+                    wrap.append(scanGrid(c.scans, {
+                        onRemove: s => { const ix = c.scans.indexOf(s); if (ix >= 0) c.scans.splice(ix, 1); persist(); rebuild(); },
+                        onRename: true, onChange: rebuild
+                    }));
+                } else {
+                    wrap.append(el('div', { class: 'list-empty', text: 'Nenhum scan ainda. Adicione por URL, upload ou da galeria.' }));
+                }
+            }
+            rebuild();
+            return wrap;
+        }
+
+        function galleryView() {
+            const wrap = el('div', { class: 'sheet' });
+            function rebuild() {
+                wrap.innerHTML = '';
+                wrap.append(el('div', { class: 'subtitle', text: 'Banco de imagens geral — adicione scans aqui e reutilize nos personagens.' }));
+                wrap.append(scanAdder(DATA.scans, rebuild));
+                wrap.append(secTitle('image', 'Galeria de scans (' + (DATA.scans || []).length + ')'));
+                if ((DATA.scans || []).length) {
+                    wrap.append(scanGrid(DATA.scans, {
+                        onRemove: s => { const ix = DATA.scans.indexOf(s); if (ix >= 0) DATA.scans.splice(ix, 1); persist(); rebuild(); },
+                        onRename: true, onChange: rebuild
+                    }));
+                } else {
+                    wrap.append(el('div', { class: 'list-empty', text: 'Nenhum scan na galeria ainda.' }));
+                }
+            }
+            rebuild();
+            return wrap;
+        }
+
+        function charSheet(c) {
+            const sheet = el('div', { class: 'sheet' });
+            const badges = el('div', { class: 'badges' });
+            if (c.race) badges.append(el('span', { class: 'badge', text: c.race }));
+            if (c.charClass) badges.append(el('span', { class: 'badge', text: c.charClass }));
+            badges.append(el('span', { class: 'badge gold', text: 'Nível ' + numOr(c.level) }));
+            sheet.append(el('div', { class: 'sheetTop' }, [
+                portraitBlock(c, 'person'),
+                el('div', { class: 'idBlock' }, [
+                    el('div', { class: 'sheetName', text: c.nome || '(sem nome)' }),
+                    badges,
+                    hpBlock(c.hp, c.hpMax)
+                ])
+            ]));
+            sheet.append(attrView(c, buildMods(c)));
+            sheet.append(secTitle('shield', 'Build / Equipamento'));
+            sheet.append(buildView(c));
+            if ((c.skills || []).length) {
+                sheet.append(secTitle('bolt', 'Habilidades'));
+                const rows = el('div', { class: 'sheetRows' });
+                c.skills.forEach(s => rows.append(sheetRow(s.imageURL, s.nome || '(sem nome)', s.desc || '')));
+                sheet.append(rows);
+            }
+            if ((c.inventory || []).length) {
+                sheet.append(secTitle('bag', 'Carregando'));
+                const rows = el('div', { class: 'sheetRows' });
+                c.inventory.forEach(e => {
+                    const linked = itemById(e.itemId);
+                    const nome = linked ? linked.nome : (e.nome || '(sem nome)');
+                    const img = e.imageURL || (linked && linked.imageURL) || '';
+                    const extra = [];
+                    const q = numOr(e.qtd, 1);
+                    if (q > 1) extra.push('x' + q);
+                    if (linked && linked.raridade) extra.push(linked.raridade);
+                    rows.append(sheetRow(img, nome, extra.join(' · ')));
+                });
+                sheet.append(rows);
+            }
+            if ((c.scans || []).length) {
+                sheet.append(secTitle('image', 'Scans (' + c.scans.length + ')'));
+                sheet.append(scanGrid(c.scans, {}));
+            }
+            if (c.notes) {
+                sheet.append(secTitle('pencil', 'Anotações'));
+                sheet.append(el('div', { class: 'sheetText', text: c.notes }));
+            }
+            return sheet;
+        }
+
+        function itemSheet(i) {
+            const sheet = el('div', { class: 'sheet' });
+            const badges = el('div', { class: 'badges' });
+            badges.append(el('span', { class: 'badge gold', text: i.categoria || 'Arma' }));
+            if ((i.categoria === 'Armadura') && i.slot) badges.append(el('span', { class: 'badge', text: i.slot }));
+            if (i.tipo) badges.append(el('span', { class: 'badge', text: i.tipo }));
+            badges.append(el('span', { class: 'badge', text: i.raridade || 'Comum' }));
+            sheet.append(el('div', { class: 'sheetTop' }, [
+                portraitBlock(i, 'tag'),
+                el('div', { class: 'idBlock' }, [el('div', { class: 'sheetName', text: i.nome || '(sem nome)' }), badges])
+            ]));
+            if (hasMods(i.mods)) {
+                sheet.append(secTitle('sliders', 'Modificadores'));
+                sheet.append(modsChips(i.mods));
+            }
+            const owners = ownersOfItem(i.id);
+            sheet.append(secTitle('users', 'Possuído por'));
+            if (owners.length) {
+                const rows = el('div', { class: 'sheetRows' });
+                owners.forEach(o => rows.append(sheetRow(o.imageURL, o.nome || '(sem nome)', '')));
+                sheet.append(rows);
+            } else {
+                sheet.append(el('div', { class: 'sheetMuted', text: 'Nenhum personagem possui este item.' }));
+            }
+            if (i.desc) {
+                sheet.append(secTitle('text', 'Descrição'));
+                sheet.append(el('div', { class: 'sheetText', text: i.desc }));
+            }
+            return sheet;
+        }
+
+        function creatureSheet(c) {
+            const sheet = el('div', { class: 'sheet' });
+            const badges = el('div', { class: 'badges' });
+            if (c.criaturaTipo) badges.append(el('span', { class: 'badge', text: c.criaturaTipo }));
+            String(c.tags || '').split(',').map(s => s.trim()).filter(Boolean)
+                .forEach(t => badges.append(el('span', { class: 'badge', text: t })));
+            sheet.append(el('div', { class: 'sheetTop' }, [
+                portraitBlock(c, 'paw'),
+                el('div', { class: 'idBlock' }, [
+                    el('div', { class: 'sheetName', text: c.nome || '(sem nome)' }),
+                    badges,
+                    hpBlock(c.hp, c.hpMax)
+                ])
+            ]));
+            sheet.append(attrView(c));
+            if (c.desc) {
+                sheet.append(secTitle('text', 'Descrição / táticas'));
+                sheet.append(el('div', { class: 'sheetText', text: c.desc }));
+            }
+            return sheet;
+        }
+
+        function groupSheet(g) {
+            const sheet = el('div', { class: 'sheet' });
+            sheet.append(el('div', { class: 'sheetName', text: g.nome || '(sem nome)' }));
+            if (g.desc) sheet.append(el('div', { class: 'sheetText', text: g.desc }));
+            const members = (g.members || []).map(charById).filter(Boolean);
+            sheet.append(secTitle('users', 'Membros (' + members.length + ')'));
+            if (members.length) {
+                const rows = el('div', { class: 'sheetRows' });
+                members.forEach(c => rows.append(sheetRow(c.imageURL, c.nome || '(sem nome)',
+                    (c.race || '') + (c.charClass ? (c.race ? ' · ' : '') + c.charClass : ''))));
+                sheet.append(rows);
+            } else {
+                sheet.append(el('div', { class: 'sheetMuted', text: 'Nenhum membro ainda.' }));
+            }
+            return sheet;
+        }
+
+        function charCard(c) {
+            const card = el('div', { class: 'editorCard' }, [cardHeader(c, 'chars'), editHint()]);
+            if (!edit) { card.append(charSheet(c)); return card; }
+            card.append(photoSection(c));
+            card.append(secTitle('id', 'Identidade'));
+            card.append(el('div', { class: 'formGrid' }, [
+                field('Nome', c.nome, v => { c.nome = v; updateTitles(); }, { full: true, placeholder: 'Nome do personagem' }),
+                field('Raça', c.race, v => { c.race = v; }),
+                field('Classe', c.charClass, v => { c.charClass = v; }),
+                field('Nível', c.level, v => { c.level = numOr(v); }, { type: 'number' }),
+                field('HP atual', c.hp, v => { c.hp = numOr(v); }, { type: 'number' }),
+                field('HP máximo', c.hpMax, v => { c.hpMax = numOr(v); }, { type: 'number' })
+            ]));
+            card.append(secTitle('sliders', 'Atributos'));
+            card.append(attrSection(c));
+            card.append(secTitle('shield', 'Build / Equipamento'));
+            card.append(el('div', { class: 'subtitle', text: 'Equipe itens do registro. Armas nas mãos, armaduras no corpo, artefatos (anéis/colares) no slot de artefato. Os modificadores dos itens equipados somam aos atributos.' }));
+            card.append(buildEditor(c));
+            card.append(secTitle('bolt', 'Habilidades'));
+            card.append(skillSection(c));
+            card.append(secTitle('bag', 'Carregando (inventário)'));
+            card.append(inventorySection(c));
+            card.append(secTitle('image', 'Scans'));
+            card.append(scansEditor(c));
+            card.append(secTitle('pencil', 'Anotações'));
+            card.append(el('div', { class: 'formGrid' }, [
+                field('Notas do mestre (segredos, tramas, status)', c.notes, v => { c.notes = v; }, { full: true, textarea: true, rows: 5 })
+            ]));
+            return card;
+        }
+
+        function itemCard(i) {
+            const card = el('div', { class: 'editorCard' }, [cardHeader(i, 'items'), editHint()]);
+            if (!edit) { card.append(itemSheet(i)); return card; }
+            card.append(photoSection(i));
+            card.append(secTitle('tag', 'Registro'));
+            const catSel = el('select', {}, CATEGORIES.map(c => el('option', { value: c, text: c })));
+            catSel.value = i.categoria || 'Arma';
+            catSel.addEventListener('change', () => { i.categoria = catSel.value; if (i.categoria === 'Armadura' && !i.slot) i.slot = 'Corpo'; persist(); render(); });
+            const catField = el('div', { class: 'field' }, [el('label', { text: 'Categoria' }), catSel]);
+            const rarSel = el('select', {}, RARITIES.map(r => el('option', { value: r, text: r })));
+            rarSel.value = i.raridade || 'Comum';
+            rarSel.addEventListener('change', () => { i.raridade = rarSel.value; save(); });
+            const rarField = el('div', { class: 'field' }, [el('label', { text: 'Raridade' }), rarSel]);
+            const fields = [
+                field('Nome', i.nome, v => { i.nome = v; updateTitles(); }, { full: true, placeholder: 'Nome do item' }),
+                catField
+            ];
+            if (i.categoria === 'Armadura') {
+                const slotSel = el('select', {}, ARMOR_SLOTS.map(s => el('option', { value: s, text: s })));
+                slotSel.value = i.slot || 'Corpo';
+                slotSel.addEventListener('change', () => { i.slot = slotSel.value; persist(); render(); });
+                fields.push(el('div', { class: 'field' }, [el('label', { text: 'Slot do corpo' }), slotSel]));
+            }
+            fields.push(field('Tipo (detalhe)', i.tipo, v => { i.tipo = v; }, { placeholder: 'Espada, Elmo, Poção...' }));
+            fields.push(rarField);
+            card.append(el('div', { class: 'formGrid' }, fields));
+            if (i.categoria !== 'Consumível') {
+                card.append(secTitle('sliders', 'Modificadores de atributo'));
+                card.append(el('div', { class: 'subtitle', text: 'Some (ou subtraia) valores dos atributos do personagem que equipar este item.' }));
+                card.append(modsEditor(i));
+            }
+            card.append(secTitle('text', 'Descrição'));
+            card.append(el('div', { class: 'formGrid' }, [
+                field('Descrição livre', i.desc, v => { i.desc = v; }, { full: true, textarea: true, rows: 4 })
+            ]));
+            return card;
+        }
+
+        function creatureCard(c) {
+            const card = el('div', { class: 'editorCard' }, [cardHeader(c, 'creatures'), editHint()]);
+            if (!edit) { card.append(creatureSheet(c)); return card; }
+            card.append(photoSection(c));
+            card.append(secTitle('paw', 'Identificação'));
+            card.append(el('div', { class: 'formGrid' }, [
+                field('Nome', c.nome, v => { c.nome = v; updateTitles(); }, { full: true }),
+                field('Tipo', c.criaturaTipo, v => { c.criaturaTipo = v; }, { placeholder: 'Besta, Morto-vivo, Dragão...' }),
+                field('Tags', c.tags, v => { c.tags = v; }, { placeholder: 'separadas por vírgula' }),
+                field('HP atual', c.hp, v => { c.hp = numOr(v); }, { type: 'number' }),
+                field('HP máximo', c.hpMax, v => { c.hpMax = numOr(v); }, { type: 'number' })
+            ]));
+            card.append(secTitle('sliders', 'Atributos'));
+            card.append(attrSection(c));
+            card.append(secTitle('text', 'Descrição / táticas'));
+            card.append(el('div', { class: 'formGrid' }, [
+                field('', c.desc, v => { c.desc = v; }, { full: true, textarea: true, rows: 4 })
+            ]));
+            return card;
+        }
+
+        function groupCard(g) {
+            const card = el('div', { class: 'editorCard' }, [cardHeader(g, 'groups'), editHint()]);
+            if (!edit) { card.append(groupSheet(g)); return card; }
+            card.append(el('div', { class: 'formGrid' }, [
+                field('Nome', g.nome, v => { g.nome = v; updateTitles(); }, { full: true }),
+                field('Descrição', g.desc, v => { g.desc = v; }, { full: true, textarea: true, rows: 3 })
+            ]));
+            card.append(secTitle('users', 'Membros (' + (g.members || []).length + ')'));
+            card.append(membersSection(g));
+            return card;
+        }
+
+        function cmpCell(v, win, side) {
+            const cell = el('div', { class: 'cmpVal ' + side + (win ? ' win' : '') });
+            cell.append(el('span', { class: 'n', text: v }));
+            if (win) cell.append(el('span', { class: 'mark', text: side === 'a' ? '▲' : '▲' }));
+            return cell;
+        }
+
+        function cmpRow(label, va, vb, isSub) {
+            const win = va === vb ? 0 : (va > vb ? 1 : -1);
+            const row = el('div', { class: 'cmpRow' + (isSub ? ' sub' : '') });
+            row.append(cmpCell(va, win === 1, 'a'));
+            const key = el('div', { class: 'cmpKey' });
+            key.append(el('span', { text: label }));
+            if (!isSub) {
+                const diff = va - vb;
+                key.append(el('span', { class: 'cmpPill' + (diff === 0 ? ' eq' : (diff < 0 ? ' neg' : '')), text: diff === 0 ? '=' : (diff > 0 ? '+' + diff : String(diff)) }));
+            }
+            row.append(key, cmpCell(vb, win === -1, 'b'));
+            return row;
+        }
+
+        function cmpSection(label) {
+            return el('div', { class: 'cmpRow section' }, [el('div', { class: 'cmpKey', text: label })]);
+        }
+
+        function cmpSide(c, side) {
+            const info = el('div', { class: 'cmpSideInfo' });
+            const sel = el('select', { class: 'picker' }, (DATA.characters || [])
+                .map(x => el('option', { value: x.id, text: x.nome || '(sem nome)' })));
+            sel.value = c.id;
+            sel.addEventListener('change', () => { compare[side] = sel.value; render(); });
+            info.append(el('div', { class: 'cmpSideName', text: c.nome || '(sem nome)' }), sel);
+            const p = el('div', { class: 'sheetPortrait' });
+            if (c.imageURL) p.style.backgroundImage = bgOf(c);
+            else p.append(icon('person'));
+            return el('div', { class: 'cmpSide' + (side === 'b' ? ' right' : '') }, [p, info]);
+        }
+
+        function compareView() {
+            const chars = DATA.characters || [];
+            if (!chars.length) return el('div', { class: 'list-empty', text: 'Nenhum personagem para comparar.' });
+            if (!compare.a || !charById(compare.a)) compare.a = chars[0].id;
+            if (!compare.b || !charById(compare.b)) compare.b = (chars[1] || chars[0]).id;
+            const a = charById(compare.a), b = charById(compare.b);
+            const top = el('div', { class: 'cmpTop' }, [cmpSide(a, 'a'), el('div', { class: 'cmpVs', text: 'VS' }), cmpSide(b, 'b')]);
+            const rows = el('div', { class: 'cmpRows' });
+            rows.append(cmpSection('Geral'));
+            rows.append(cmpRow('Nível', numOr(a.level), numOr(b.level)));
+            rows.append(cmpRow('HP máximo', numOr(a.hpMax), numOr(b.hpMax)));
+            ATTRS.forEach(attr => {
+                rows.append(cmpSection(attr.key + (attr.required ? ' · principal' : ' · opcional')));
+                rows.append(cmpRow(attr.key, numOr(a.attributes[attr.key]), numOr(b.attributes[attr.key])));
+                attr.splits.forEach(sp => rows.append(cmpRow(sp, numOr(a.derived[sp]), numOr(b.derived[sp]), true)));
+            });
+            return el('div', { class: 'sheet' }, [top, rows]);
+        }
+
+        function render() {
+            applyLayout();
+            renderLists();
+            const root = document.getElementById('editorRoot');
+            root.innerHTML = '';
+            root.classList.toggle('narrow', view === 'editor');
+            const empty = document.getElementById('emptyState');
+            const statsBtn = document.getElementById('btnStats');
+            if (statsBtn) statsBtn.classList.toggle('active', view === 'stats');
+            const cmpBtn = document.getElementById('btnCompare');
+            if (cmpBtn) cmpBtn.classList.toggle('active', view === 'compare');
+            const galBtn = document.getElementById('btnGallery');
+            if (galBtn) galBtn.classList.toggle('active', view === 'gallery');
+            if (view === 'stats') {
+                empty.classList.add('hidden');
+                root.append(statView());
+                return;
+            }
+            if (view === 'compare') {
+                empty.classList.add('hidden');
+                root.append(compareView());
+                return;
+            }
+            if (view === 'gallery') {
+                empty.classList.add('hidden');
+                root.append(galleryView());
+                return;
+            }
+            const o = current && getList(current.type).find(x => x.id === current.id);
+            if (!o) { empty.classList.remove('hidden'); return; }
+            empty.classList.add('hidden');
+            if (current.type === 'chars') root.append(charCard(o));
+            else if (current.type === 'items') root.append(itemCard(o));
+            else if (current.type === 'creatures') root.append(creatureCard(o));
+            else if (current.type === 'groups') root.append(groupCard(o));
+        }
+
+        function renderListsOnly() { renderLists(); }
+
+        function updateTitles() {
+            const t = current && getList(current.type).find(x => x.id === current.id);
+            if (t) {
+                const h = document.querySelector('.editorCard h2 span');
+                if (h) h.textContent = t.nome || '(sem nome)';
+            }
+            renderLists();
+        }
+
+        function createNew(tab) {
+            const conf = COLLECTIONS[tab];
+            if (!conf) return;
+            const newId = uid(tab);
+            let o;
+            if (tab === 'chars') {
+                o = { id: newId, nome: '', race: '', charClass: '', level: 1, hp: 10, hpMax: 10, imageURL: '', attributes: {}, derived: {}, skills: [], inventory: [], scans: [], build: { mao1: null, mao2: null, artefato: null, cabeca: null, corpo: null, pernas: null }, notes: '' };
+                ATTRS.forEach(a => { o.attributes[a.key] = 0; a.splits.forEach(sp => o.derived[sp] = 0); });
+                DATA.characters.push(o);
+            } else if (tab === 'items') {
+                o = { id: newId, nome: '', desc: '', tipo: '', categoria: 'Arma', slot: 'Corpo', raridade: 'Comum', imageURL: '', mods: {} };
+                DATA.items.push(o);
+            } else if (tab === 'creatures') {
+                o = { id: newId, nome: '', criaturaTipo: '', tags: '', hp: 1, hpMax: 1, imageURL: '', desc: '', attributes: {}, derived: {} };
+                ATTRS.forEach(a => { o.attributes[a.key] = 0; a.splits.forEach(sp => o.derived[sp] = 0); });
+                DATA.creatures.push(o);
+            } else if (tab === 'groups') {
+                o = { id: newId, nome: '', desc: '', members: [] };
+                DATA.groups.push(o);
+            }
+            selection[tab] = newId;
+            current = { type: tab, id: newId };
+            view = 'editor';
+            edit = true;
+            persist();
+            render();
+            toast(conf.name + ' criado.');
+        }
+
+        function deleteEntity(tab, o) {
+            const nome = o.nome || '(sem nome)';
+            if (!confirm('Excluir "' + nome + '"? Essa ação não pode ser desfeita.')) return;
+            const arr = DATA[COLLECTIONS[tab].list];
+            const ix = arr.indexOf(o);
+            if (ix >= 0) arr.splice(ix, 1);
+            if (tab === 'items') {
+                DATA.characters.forEach(c => {
+                    (c.inventory || []).forEach(e => { if (e.itemId === o.id) e.itemId = null; });
+                    if (c.build) SLOTS.forEach(s => { if (c.build[s.key] === o.id) c.build[s.key] = null; });
+                });
+            }
+            if (tab === 'chars') {
+                DATA.groups.forEach(g => g.members = (g.members || []).filter(id => id !== o.id));
+            }
+            if (selection[tab] === o.id) selection[tab] = null;
+            if (current && current.type === tab && current.id === o.id) current = null;
+            persist();
+            render();
+            toast('"' + nome + '" excluído.');
+        }
+
+        function exportJSON() {
+            const payload = { app: 'rpg-admin', version: 1, exportedAt: new Date().toISOString(), data: DATA };
+            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+            const d = new Date();
+            const p = n => String(n).padStart(2, '0');
+            const stamp = d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '-' + p(d.getHours()) + p(d.getMinutes());
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'rpg-admin-backup-' + stamp + '.json';
+            document.body.append(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+            toast('Backup exportado.');
+        }
+
+        document.getElementById('btnExport').addEventListener('click', exportJSON);
+
+        document.getElementById('btnImport').addEventListener('click', () => {
+            const inp = el('input', { type: 'file', accept: '.json,application/json', style: 'display:none' });
+            const cleanup = () => inp.remove();
+            inp.addEventListener('change', () => {
+                const f = inp.files && inp.files[0];
+                if (!f) { cleanup(); return; }
+                const r = new FileReader();
+                r.onerror = () => { toast('Não foi possível ler o arquivo.'); cleanup(); };
+                r.onload = () => {
+                    try {
+                        let parsed = JSON.parse(r.result);
+                        if (parsed && typeof parsed === 'object' && parsed.data && typeof parsed.data === 'object') parsed = parsed.data;
+                        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('formato');
+                        const keys = ['characters', 'items', 'creatures', 'groups', 'scans'];
+                        if (!keys.some(k => Array.isArray(parsed[k]))) throw new Error('formato');
+                        if (!confirm('Isso substitui todos os dados atuais pelos do arquivo. Continuar?')) { cleanup(); return; }
+                        DATA = normalize(parsed);
+                        selection = { chars: null, items: null, creatures: null, groups: null };
+                        current = null;
+                        view = 'editor';
+                        edit = false;
+                        persist();
+                        render();
+                        toast('Dados importados.');
+                    } catch (e) {
+                        toast('Arquivo inválido — use um JSON exportado aqui.');
+                    }
+                    cleanup();
+                };
+                r.readAsText(f);
+            });
+            document.body.append(inp);
+            inp.click();
+            setTimeout(cleanup, 120000);
+        });
+
+        document.getElementById('leftPicker').addEventListener('change', e => { sideTab.left = e.target.value; renderLists(); });
+        document.getElementById('rightPicker').addEventListener('change', e => { sideTab.right = e.target.value; renderLists(); });
+
+        document.getElementById('btnStats').addEventListener('click', () => { view = view === 'stats' ? 'editor' : 'stats'; render(); });
+
+        document.getElementById('btnCompare').addEventListener('click', () => { view = view === 'compare' ? 'editor' : 'compare'; render(); });
+
+        document.getElementById('btnGallery').addEventListener('click', () => { view = view === 'gallery' ? 'editor' : 'gallery'; render(); });
+
+        document.getElementById('lightbox').addEventListener('click', function () { this.classList.remove('show'); });
+        window.addEventListener('keydown', e => { if (e.key === 'Escape') document.getElementById('lightbox').classList.remove('show'); });
+
+        ['searchLeft', 'searchRight'].forEach(idS => {
+            document.getElementById(idS).addEventListener('input', renderListsOnly);
+        });
+
+        document.getElementById('edgeLeft').addEventListener('click', () => { sideOpen.left = !sideOpen.left; applyLayout(); });
+        document.getElementById('edgeRight').addEventListener('click', () => { sideOpen.right = !sideOpen.right; applyLayout(); });
+
+        window.addEventListener('load', () => { document.body.style.opacity = 1; });
+
+        window.addEventListener('beforeunload', flushSave);
+        document.addEventListener('visibilitychange', () => { if (document.hidden) flushSave(); });
+
+        let wasMobile = isMobile();
+        window.addEventListener('resize', () => {
+            const m = isMobile();
+            if (m === wasMobile) return;
+            wasMobile = m;
+            sideOpen.left = !m;
+            sideOpen.right = !m;
+            applyLayout();
+        });
+
+        render();
+
+        if (!STORE_OK) {
+            setSaveStatus('Armazenamento indisponível — exporte um JSON', true);
+            toast('Armazenamento local indisponível neste navegador. Exporte um backup para não perder dados.');
+        }
+    </script>
+</body>
+
+</html>
